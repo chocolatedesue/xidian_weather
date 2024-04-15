@@ -40,6 +40,10 @@ dependencies:
   get_it: ^7.6.9
   # flutter_bloc: ^8.1.5
   provider: ^6.1.2
+  geolocator: ^11.0.0
+  # get: ^4.6.6
+  toastification: ^1.2.1
+  flutter_city_picker: ^2.1.1
   # geolocator: ^11.0.0
 
 dev_dependencies:

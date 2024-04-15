@@ -12,7 +12,29 @@ class WeatherService {
 
   WeatherService(this.authKey);
 
+  Future<AirInfo> getCityAirByPosition (double lat, double lon) async {
+    lat = double.parse(lat.toStringAsFixed(2));
+    lon = double.parse(lon.toStringAsFixed(2));
+    var url = '$weatherBaseUrl/air/now?location=$lon,$lat&key=$authKey';
+    var response = await Dio().get(url);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load air data');
+    }
+
+    var responseJson = response.data;
+
+    if (int.parse(responseJson['code']) != 200) {
+      throw Exception('Failed to load air data');
+    } else {
+      AirInfo airData = AirInfo.fromJson(responseJson);
+      return airData;
+    }
+  }
+
+
   Future<AirInfo> getCityAirByGeoID(String geoID) async {
+    
     var url = '$weatherBaseUrl/air/now?location=$geoID&key=$authKey';
     // var response = await http.get(Uri.parse(url));
     var response = await Dio().get(url);
@@ -34,6 +56,7 @@ class WeatherService {
 
 
   Future<WeatherInfo> getCityWeatherNowByGeoID(String geoID) async {
+
     var url = '$weatherBaseUrl/weather/now?location=$geoID&key=$authKey';
     // var response = await http.get(Uri.parse(url));
     var response = await Dio().get(url);
@@ -53,11 +76,13 @@ class WeatherService {
   }
 
   Future<WeatherInfo> getCityWeatherNowByPosition(
-      GeoPosiition geoPosition) async {
-    var lat = double.parse(geoPosition.latitude).toStringAsFixed(2);
-    var lon = double.parse(geoPosition.longitude).toStringAsFixed(2);
+      double lat , double lon) async {
+        lat = double.parse(lat.toStringAsFixed(2));
+        lon = double.parse(lon.toStringAsFixed(2));
+    // var lat = double.parse(geoPosition.latitude).toStringAsFixed(2);
+    // var lon = double.parse(geoPosition.longitude).toStringAsFixed(2);
 
-    var url = '$weatherBaseUrl/weather/now?location=$lat,$lon&key=$authKey';
+    var url = '$weatherBaseUrl/weather/now?location=$lon,$lat&key=$authKey';
     // var url =
     // '$weatherBaseUrl/weather/now?location=${},${geoPosition.longitude}&key=$authKey';
     // var url = '$weatherBaseUrl/weather/now?location=$cityName&key=$authKey';

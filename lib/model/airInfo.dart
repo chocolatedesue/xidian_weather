@@ -13,7 +13,7 @@ class AirInfo {
     String updateTime;
     String fxLink;
     Now now;
-    List<Now> station;
+    // List<Now> station;
     Refer refer;
 
     AirInfo({
@@ -21,7 +21,7 @@ class AirInfo {
         required this.updateTime,
         required this.fxLink,
         required this.now,
-        required this.station,
+        // required this.station,
         required this.refer,
     });
 
@@ -30,7 +30,7 @@ class AirInfo {
         updateTime: json["updateTime"],
         fxLink: json["fxLink"],
         now: Now.fromJson(json["now"]),
-        station: List<Now>.from(json["station"].map((x) => Now.fromJson(x))),
+        // station: List<Now>.from(json["station"].map((x) => Now.fromJson(x))),
         refer: Refer.fromJson(json["refer"]),
     );
 
@@ -39,7 +39,7 @@ class AirInfo {
         "updateTime": updateTime,
         "fxLink": fxLink,
         "now": now.toJson(),
-        "station": List<dynamic>.from(station.map((x) => x.toJson())),
+        // "station": List<dynamic>.from(station.map((x) => x.toJson())),
         "refer": refer.toJson(),
     };
 }

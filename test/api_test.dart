@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get_it/get_it.dart';
 import 'package:xidian_weather/main.dart';
 import 'package:xidian_weather/model/geoInfo.dart';
@@ -41,6 +43,27 @@ void main() {
     var airData = await weatherService.getCityAirByGeoID(geoid);
     // print ('airData: $airData');
     print ('airData: ${airData.toJson()}');
+  });
+
+  test ("get_it test ", () async {
+    setupData();
+    sleep(Duration(seconds: 1));
+    var position = GetIt.I.get<Position>();
+
+    print ('position: $position');
+
+  });
+
+  test ("api test 3", () async {
+    double lat = 34.3416;
+    double lon = 108.9398;
+    setupData();
+    var weatherService = GetIt.I.get<WeatherService>();
+    var weatherData = await weatherService.getCityWeatherNowByPosition(lat, lon);
+    var airData = await weatherService.getCityAirByPosition(lat, lon);
+    print ('weatherData: $weatherData');
+    print ('airData: $airData');
+
   });
 
 
