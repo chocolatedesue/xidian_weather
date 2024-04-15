@@ -1,8 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:provider/provider.dart';
+import 'package:xidian_weather/provider/weather_provider.dart';
 import 'package:xidian_weather/screens/homepage.dart';
+import 'package:xidian_weather/service/geoapi_service.dart';
+import 'package:xidian_weather/service/weatherapi_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  setupData();
   runApp(const MyApp());
+}
+
+void setupData() async {
+  // setup data
+  String apiKey = 'a39653de05304df4a1aa614bba622fef';
+  GetIt.I.registerSingleton<WeatherService>(
+    WeatherService(apiKey),
+  );
+  GetIt.I.registerSingleton<GeoapiService>(
+    GeoapiService(apiKey),
+  );
+
+
 }
 
 class MyApp extends StatelessWidget {
@@ -12,8 +32,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //  build a weather app
-    return Material(
-      child: MaterialApp(
+
+
+    return ChangeNotifierProvider(
+        create: (context) => WeatherProvider(),
+
+        child: MaterialApp(
           // title: 'Weather App',
           theme: ThemeData(
             primarySwatch: Colors.blue,
@@ -28,7 +52,10 @@ class MyApp extends StatelessWidget {
             ),
           ),
           home: HomePage()),
-    );
+    
+    );  
+
+    
   }
 }
 

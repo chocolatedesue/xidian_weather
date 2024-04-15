@@ -101,3 +101,6 @@ build/
 **/macos/Flutter/Flutter-Debug.xcconfig
 **/macos/Flutter/Flutter-Release.xcconfig
 **/macos/Flutter/Flutter.framework/
+
+
+.env
