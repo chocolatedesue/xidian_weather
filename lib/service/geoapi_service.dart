@@ -1,5 +1,4 @@
-
-import 'package:dio/dio.dart';// import 'package:geolocator/geolocator.dart';
+import 'package:dio/dio.dart'; // import 'package:geolocator/geolocator.dart';
 import 'package:xidian_weather/model/geoInfo.dart';
 import 'package:xidian_weather/model/geoPositon.dart';
 
@@ -27,14 +26,13 @@ class GeoapiService {
     if (int.parse(responseJson['code']) != 200) {
       throw Exception('Failed to load weather data');
     } else {
-      var id = responseJson['location'][0]['id'];
-      var cityName = responseJson['location'][0]['name'];
+      // var id = responseJson['location'][0]['id'];
+      // var cityName = responseJson['location'][0]['name'];
       // return G(id: id, cityName: cityName);
-      return GeoInfo(id: id, cityName: cityName);
+      return GeoInfo.fromJson(responseJson);
     }
     // return await Geolocator.getCurrentPosition(
   }
-
 
   Future<GeoInfo> getCurrentGeoIDByCityName(String cityName) async {
     var url = '$baseUrl/city/lookup?location=$cityName&key=$authKey';
@@ -51,10 +49,10 @@ class GeoapiService {
     if (int.parse(responseJson['code']) != 200) {
       throw Exception('Failed to load weather data');
     } else {
-      var id = responseJson['location'][0]['id'];
-      var cityName = responseJson['location'][0]['name'];
+      // var id = responseJson['location'][0]['id'];
+      // var cityName = responseJson['location'][0]['name'];
       // return G(id: id, cityName: cityName);
-      return GeoInfo(id: id, cityName: cityName);
+      return GeoInfo.fromJson(responseJson);
     }
     // return await Geolocator.getCurrentPosition(
   }
@@ -77,7 +75,7 @@ class GeoapiService {
     } else {
       var lat = responseJson['location'][0]['lat'];
       var lon = responseJson['location'][0]['lon'];
-      return GeoPosiition(latitude: lat, longitude: lon);
+      return GeoPosiition(lat: lat, lon: lon);
     }
     // return await Geolocator.getCurrentPosition(
   }

@@ -39,9 +39,9 @@ class WeatherProvider extends ChangeNotifier {
       notifyListeners();
       
       geoInfo = await geoapiService.getCurrentGeoIDByCityName(cityName);
-      weatherInfo = await weatherService.getCityWeatherNowByGeoID(geoInfo!.id);
-      airInfo = await weatherService.getCityAirByGeoID(geoInfo!.id);
-      
+      weatherInfo = await weatherService.getCityWeatherNowByGeoID(geoInfo!.location[0].id);
+      airInfo = await weatherService.getCityAirByGeoID(geoInfo!.location[0].id);
+  
       isLoading = false;
       notifyListeners();    
    

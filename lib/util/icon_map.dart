@@ -1,0 +1,68 @@
+import 'package:flutter/material.dart';
+
+class WeatherInfo {
+  final int code;
+  final IconData dayIcon;
+  final IconData nightIcon;
+
+  WeatherInfo(this.code, this.dayIcon, this.nightIcon);
+}
+
+Map<String, WeatherInfo> weatherDescriptionMap = {
+  '晴': WeatherInfo(100, Icons.wb_sunny, Icons.nightlight_round), 
+  '多云': WeatherInfo(101, Icons.wb_cloudy, Icons.nightlight_round), 
+  '少云': WeatherInfo(102, Icons.wb_cloudy, Icons.nightlight_round), 
+  '晴间多云': WeatherInfo(103, Icons.wb_cloudy, Icons.nightlight_round), 
+  '阴': WeatherInfo(104, Icons.cloud, Icons.cloud),
+  '阵雨': WeatherInfo(300, Icons.grain, Icons.nightlight_round), 
+  '强阵雨': WeatherInfo(301, Icons.grain, Icons.nightlight_round), 
+  '雷阵雨': WeatherInfo(302, Icons.grain, Icons.grain), 
+  '强雷阵雨': WeatherInfo(303, Icons.grain, Icons.grain), 
+  '雷阵雨伴有冰雹': WeatherInfo(304, Icons.grain, Icons.grain), 
+  '小雨': WeatherInfo(305, Icons.grain, Icons.grain), 
+  '中雨': WeatherInfo(306, Icons.grain, Icons.grain), 
+  '大雨': WeatherInfo(307, Icons.grain, Icons.grain), 
+  '极端降雨': WeatherInfo(308, Icons.grain, Icons.grain), 
+  '毛毛雨/细雨': WeatherInfo(309, Icons.grain, Icons.grain), 
+  '暴雨': WeatherInfo(310, Icons.grain, Icons.grain), 
+  '大暴雨': WeatherInfo(311, Icons.grain, Icons.grain), 
+  '特大暴雨': WeatherInfo(312, Icons.grain, Icons.grain), 
+  '冻雨': WeatherInfo(313, Icons.grain, Icons.grain), 
+  '小到中雨': WeatherInfo(314, Icons.grain, Icons.grain), 
+  '中到大雨': WeatherInfo(315, Icons.grain, Icons.grain), 
+  '大到暴雨': WeatherInfo(316, Icons.grain, Icons.grain), 
+  '暴雨到大暴雨': WeatherInfo(317, Icons.grain, Icons.grain), 
+  '大暴雨到特大暴雨': WeatherInfo(318, Icons.grain, Icons.grain), 
+  '雨': WeatherInfo(399, Icons.grain, Icons.grain), 
+  '小雪': WeatherInfo(400, Icons.ac_unit, Icons.ac_unit), 
+  '中雪': WeatherInfo(401, Icons.ac_unit, Icons.ac_unit), 
+  '大雪': WeatherInfo(402, Icons.ac_unit, Icons.ac_unit), 
+  '暴雪': WeatherInfo(403, Icons.ac_unit, Icons.ac_unit), 
+  '雨夹雪': WeatherInfo(404, Icons.ac_unit, Icons.ac_unit), 
+  '雨雪天气': WeatherInfo(405, Icons.ac_unit, Icons.ac_unit), 
+  '阵雨夹雪': WeatherInfo(406, Icons.ac_unit, Icons.nightlight_round), 
+  '阵雪': WeatherInfo(407, Icons.ac_unit, Icons.nightlight_round), 
+  '小到中雪': WeatherInfo(408, Icons.ac_unit, Icons.ac_unit), 
+  '中到大雪': WeatherInfo(409, Icons.ac_unit, Icons.ac_unit), 
+  '大到暴雪': WeatherInfo(410, Icons.ac_unit, Icons.ac_unit), 
+  '阵雨夹雪': WeatherInfo(456, Icons.nightlight_round, Icons.ac_unit), 
+  '阵雪': WeatherInfo(457, Icons.nightlight_round, Icons.ac_unit), 
+  '雪': WeatherInfo(499, Icons.ac_unit, Icons.ac_unit), 
+  '薄雾': WeatherInfo(500, Icons.ac_unit, Icons.ac_unit), 
+  '雾': WeatherInfo(501, Icons.ac_unit, Icons.ac_unit), 
+  '霾': WeatherInfo(502, Icons.ac_unit, Icons.ac_unit), 
+  '扬沙': WeatherInfo(503, Icons.ac_unit, Icons.ac_unit), 
+  '浮尘': WeatherInfo(504, Icons.ac_unit, Icons.ac_unit), 
+  '沙尘暴': WeatherInfo(507, Icons.ac_unit, Icons.ac_unit), 
+  '强沙尘暴': WeatherInfo(508, Icons.ac_unit, Icons.ac_unit), 
+  '浓雾': WeatherInfo(509, Icons.ac_unit, Icons.ac_unit), 
+  '强浓雾': WeatherInfo(510, Icons.ac_unit, Icons.ac_unit), 
+  '中度霾': WeatherInfo(511, Icons.ac_unit, Icons.ac_unit), 
+  '重度霾': WeatherInfo(512, Icons.ac_unit, Icons.ac_unit), 
+  '严重霾': WeatherInfo(513, Icons.ac_unit, Icons.ac_unit), 
+  '大雾': WeatherInfo(514, Icons.ac_unit, Icons.ac_unit), 
+  '特强浓雾': WeatherInfo(515, Icons.ac_unit, Icons.ac_unit), 
+  '热': WeatherInfo(900, Icons.ac_unit, Icons.ac_unit), 
+  '冷': WeatherInfo(901, Icons.ac_unit, Icons.ac_unit), 
+  '未知': WeatherInfo(999, Icons.ac_unit, Icons.ac_unit), 
+};

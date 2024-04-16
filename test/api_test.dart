@@ -24,15 +24,22 @@ void main() {
 
 
     GeoInfo geoInfo = await geoapiService.getCurrentGeoIDByCityName('西安');
-    print ('geoID: $geoInfo');
-  
-    var weatherData = await weatherService.getCityWeatherNowByGeoID(geoInfo.id);
-    // developer.log('weatherData: $weatherData');
-    print ('weatherData: $weatherData');
+    // print ('geoID: $geoInfo');
 
-    var airData = await weatherService.getCityAirByGeoID(geoInfo.id);
+    print (
+      jsonEncode(geoInfo)
+    );
+  
+    var weatherData = await weatherService.getCityWeatherNowByGeoID(geoInfo.location[0].id);
+    // developer.log('weatherData: $weatherData');
+    String weatherDataStr = jsonEncode(weatherData);
+    print ('weatherData: $weatherDataStr');
+
+    var airData = await weatherService.getCityAirByGeoID(geoInfo.location[0].id);
     // developer.log('airData: $airData');
-    print ('airData: $airData');
+    String airDataStr = jsonEncode(airData);
+    print ('airData: $airDataStr');
+
 
   });
 

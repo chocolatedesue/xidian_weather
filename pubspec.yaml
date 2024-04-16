@@ -44,6 +44,7 @@ dependencies:
   # get: ^4.6.6
   toastification: ^1.2.1
   flutter_city_picker: ^2.1.1
+  dynamic_color: ^1.7.0
   # geolocator: ^11.0.0
 
 dev_dependencies:
