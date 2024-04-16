@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 // import 'package:xidian_weather/model/geoPositon.dart';
 // import 'package:xidian_weather/model/weatherInfo.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
@@ -30,13 +31,35 @@ class _WeatherPageState extends State<WeatherPage> {
   @override
   Widget build(BuildContext context) {
     final weatherProvider = Provider.of<WeatherProvider>(context);
-    final weatherInfo = weatherProvider.weatherInfo;
-    final geoInfo = weatherProvider.geoInfo;
-    final airInfo = weatherProvider.airInfo;
+    final weatherInfo = weatherProvider.curWeatherInfo;
+    final geoInfo = weatherProvider.curGeoInfo;
+    final airInfo = weatherProvider.curAirInfo;
 
     if (weatherInfo == null || geoInfo == null || airInfo == null) {
-      return Center(child: CircularProgressIndicator()); // 显示加载指示器
+      // return const Center(child: CircularProgressIndicator()); // 显示加载指示器
+    //   当前并未设置任何城市，显示提示信息
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('请添加城市以查看天气信息'),
+            ElevatedButton(
+              onPressed: () {
+              //   TODO: 跳转到添加城市页面
+                toastification.show(
+                  context: context,
+                  title: Text('跳转到添加城市页面'),
+                  autoCloseDuration: const Duration(seconds: 2),
+                );
+              },
+              child: Text('添加城市'),
+            ),
+          ],
+        ),
+      );
+
     }
+
 
     // 获取天气状况文本
     final weatherText = weatherInfo.now.text;
@@ -73,7 +96,7 @@ class _WeatherPageState extends State<WeatherPage> {
                   children: [
                     Flexible(
                       flex: 1,
-                      child: Icon(icon, size: 80), // TODO: 根据天气状况显示图标
+                      child: Icon(icon, size: 80),
                     ),
                     Flexible(
                       flex: 2,

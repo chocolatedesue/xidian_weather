@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 import 'package:xidian_weather/screens/homepage.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
@@ -37,8 +41,16 @@ Future<void> setupData() async {
     GeoapiService(apiKey),
   );
 
-  // Position position =
-  // GetIt.I.registerSingleton<Position>(position);
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  var positionStr = prefs.getString('position') ?? '';
+  if (positionStr.isNotEmpty) {
+    var positionJson = jsonDecode(positionStr);
+    Position position = Position.fromMap(positionJson);
+    GetIt.I.registerSingleton<Position>(position);
+  }
+
+
+
 }
 
 class MyApp extends StatelessWidget {
