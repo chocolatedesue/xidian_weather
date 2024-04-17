@@ -100,6 +100,7 @@ class WeatherProvider with ChangeNotifier {
 
   // 使用 _fetchData 函数获取天气数据
   Future<void> loadWeatherDataByLocation(double lat, double lon) async {
+
     await _fetchData(() async {
       final geoapiService = GetIt.I<GeoapiService>();
       final weatherService = GetIt.I<WeatherService>();
