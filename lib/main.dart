@@ -1,7 +1,9 @@
 import 'dart:convert';
 
-import 'package:dynamic_color/dynamic_color.dart';
+// import 'package:dynamic_color/dynamic_color.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+// import 'package:flutter/widgets.dart';
 // import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -13,8 +15,9 @@ import 'package:xidian_weather/screens/homepage.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
 import 'package:xidian_weather/service/weatherapi_service.dart';
 // import 'package:xidian_weather/theme/app_theme.dart';
+// import 'package:xidian_weather/theme/app_theme.dart';
 
-bool _isDemoUsingDynamicColors = false;
+// bool _isDemoUsingDynamicColors = false;
 
 // Fictitious brand color.
 const _brandBlue = Color(0xFF1E88E5);
@@ -25,30 +28,37 @@ const _brandBlue = Color(0xFF1E88E5);
 void main() async {
   await setupData();
   // await DynamicColorPlugin.initialize();
+  WidgetsFlutterBinding.ensureInitialized();
 
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    var prefs = GetIt.I<SharedPreferences>();
+    var themeMode =
+        prefs.getBool('darkMode') ?? ThemeMode.system == ThemeMode.dark
+            ? AdaptiveThemeMode.dark
+            : AdaptiveThemeMode.light;
+
     return ChangeNotifierProvider(
-      create: (context) => WeatherProvider(),
-      builder: (context, child) {
-        return const MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Weather App',
-          themeMode: ThemeMode.dark,
-          home: HomePage(),
-        );
-      },
-    );
+        create: (context) => GetIt.I<WeatherProvider>(),
+        child: AdaptiveTheme(
+          light: ThemeData.light(useMaterial3: true),
+          dark: ThemeData.dark(useMaterial3: true),
+          initial: themeMode,
+          builder: (theme, darkTheme) => MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: theme,
+            darkTheme: darkTheme,
+            home: const HomePage(),
+          ),
+        ));
   }
 }
-
-
 
 Future<void> setupData() async {
   // setup data
@@ -63,11 +73,14 @@ Future<void> setupData() async {
     GeoapiService(apiKey),
   );
 
-  // GetIt.I.registerSingleton<WeatherProvider>(
-  //   WeatherProvider(),
-  // );
+  GetIt.I.registerSingleton<WeatherProvider>(
+    WeatherProvider(),
+  );
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  GetIt.I.registerSingleton<SharedPreferences>(prefs);
+
   var positionStr = prefs.getString('position') ?? '';
   if (positionStr.isNotEmpty) {
     var positionJson = jsonDecode(positionStr);
@@ -82,36 +95,4 @@ Future<void> setupData() async {
         savedCityList.map((e) => GeoInfo.fromJson(e)).toList();
     GetIt.I<WeatherProvider>().updateSavedCities(savedCities);
   }
-
-  // GetIt.I.registerSingleton<bool>(false);
-  var isDarkMode =
-      prefs.getBool('isDarkMode') ?? ThemeMode.system == ThemeMode.dark;
-  // GetIt.I<WeatherProvider>().updateThemeMode(isDarkMode);
 }
-
-// class MyApp extends StatefulWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   State<MyApp> createState() => _MyAppState();
-// }
-
-// class _MyAppState extends State<MyApp> {
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return ChangeNotifierProvider(
-//         create: (context) => WeatherProvider(),
-//         builder: (context, child) {
-//           // final weatherProvider = GetIt.I<WeatherProvider>();
-//           // final weatherProvider = Provider.of<WeatherProvider>(context);
-//           // var themeModeState = weatherProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light;
-//           return const MaterialApp(
-//             debugShowCheckedModeBanner: false,
-//             title: 'Weather App',
-//             themeMode: ThemeMode.dark,
-//             home: HomePage(),
-//           );
-//         });
-//   }
-// }

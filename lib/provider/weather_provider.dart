@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -16,17 +18,13 @@ class WeatherProvider with ChangeNotifier {
   String _error = '';
 
   //  check system theme mode
-  
 
   GeoInfo? _geoInfo;
   CurWeatherInfo? _weatherInfo;
   AirInfo? _airInfo;
-  The7DayWeather? _the7dayWeather ;
+  The7DayWeather? _the7dayWeather;
   List<GeoInfo> _savedCities = [];
   bool _isDarkMode = ThemeMode.system == ThemeMode.dark;
- 
-
-
 
   // 使用 getter 方法获取数据，避免直接暴露私有变量
   bool get isLoading => _isLoading;
@@ -40,20 +38,37 @@ class WeatherProvider with ChangeNotifier {
 
   // get isDarkMode => null;
 
-
-
   void addCityToSavedCities(GeoInfo city) {
     _savedCities.add(city);
-    saveSavedCitiesToLocal();
+
     notifyListeners();
+    saveSavedCitiesToLocal();
   }
+
+//   Future<void> _saveStateInBackground(String key, dynamic value) async {
+//   ReceivePort receivePort = ReceivePort();
+//   Isolate isolate = await Isolate.spawn(_isolateEntrypoint, receivePort.sendPort);
+
+//   // 获取来自 Isolate 的 SendPort
+//   SendPort sendPort = await receivePort.first;
+
+//   // 发送状态数据到 Isolate
+//   sendPort.send(MapEntry(key, value));
+
+//   // 监听来自 Isolate 的保存完成消息
+//   receivePort.listen((message) {
+//     print(message);
+//     receivePort.close();
+//     isolate.kill();
+//   });
+// }
 
   // TODO: sqlite 实现savedCity增删改查
 
   Future<void> saveSavedCitiesToLocal() async {
     var pref = await SharedPreferences.getInstance();
     await pref.setStringList(
-      'savedCities', 
+      'savedCities',
       _savedCities.map((e) => jsonEncode(e.toJson())).toList(),
     );
   }
@@ -81,7 +96,8 @@ class WeatherProvider with ChangeNotifier {
       _geoInfo = await geoapiService.getCurrentGeoIDByLocation(lat, lon);
       _weatherInfo = await weatherService.getCityWeatherNowByPosition(lat, lon);
       _airInfo = await weatherService.getCityAirByPosition(lat, lon);
-      _the7dayWeather = (await weatherService.get7DayWeatherByPosition(lat, lon)) ;
+      _the7dayWeather =
+          (await weatherService.get7DayWeatherByPosition(lat, lon));
     });
   }
 
@@ -91,9 +107,12 @@ class WeatherProvider with ChangeNotifier {
       final geoapiService = GetIt.I<GeoapiService>();
       final weatherService = GetIt.I<WeatherService>();
       _geoInfo = await geoapiService.getCurrentGeoIDByCityName(cityName);
-      _weatherInfo = await weatherService.getCityWeatherNowByGeoID(_geoInfo!.location[0].id);
-      _airInfo = await weatherService.getCityAirByGeoID(_geoInfo!.location[0].id);
-      _the7dayWeather = await weatherService.get7DayWeatherByGeoID(_geoInfo!.location[0].id);
+      _weatherInfo = await weatherService
+          .getCityWeatherNowByGeoID(_geoInfo!.location[0].id);
+      _airInfo =
+          await weatherService.getCityAirByGeoID(_geoInfo!.location[0].id);
+      _the7dayWeather =
+          await weatherService.get7DayWeatherByGeoID(_geoInfo!.location[0].id);
     });
   }
 
@@ -112,10 +131,20 @@ class WeatherProvider with ChangeNotifier {
 
   void updateSavedCities(List<GeoInfo> cities) {
     _savedCities = cities;
-    
     notifyListeners();
   }
 
+  Future<void> loadSavedCities() async {
+    var pref = await SharedPreferences.getInstance();
+    var savedCities = pref.getStringList('savedCities');
+    if (savedCities != null) {
+      _savedCities =
+          savedCities.map((e) => GeoInfo.fromJson(jsonDecode(e))).toList();
+    }
+    notifyListeners();
+  }
 
-
+  Future<void> saveState() async {
+    await saveSavedCitiesToLocal();
+  }
 }

@@ -1,6 +1,7 @@
 // import 'package:dynamic_color/dynamic_color.dart';
 import 'dart:io';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter_city_picker/city_picker.dart';
@@ -27,11 +28,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-  // Color? backgroundColor;
-
-  // Create a tab controller
-  // late TabController controller;
-
   int _selectedIndex = 0;
 
   final _widgetOptions = <Widget>[
@@ -75,43 +71,55 @@ class _HomePageState extends State<HomePage>
     return Consumer<WeatherProvider>(
       builder: (context, weatherProvider, child) {
         return Scaffold(
-
-          // themeMode: weatherProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           appBar: AppBar(
             title: const Text('Weather App'),
             centerTitle: true,
-            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            // backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             actions: [
               // 使用 PopupMenuButton 创建下拉菜单
               PopupMenuButton<String>(
                 icon: Icon(Icons.more_vert), // 使用 "..." 图标
                 onSelected: (String choice) {
-                  if (choice == '刷新') {
-                    _refreshWeatherData(context);
-                  } else if (choice == '定位') {
-                    _getCurrentLocation(context, weatherProvider);
-                  } else if ( choice == "切换主题") {
-                    weatherProvider.updateThemeMode(
-                        !weatherProvider.isDarkMode
-                    );
-                  } else if (choice == '关于') {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text('关于'),
-                          content: Text('这是一个天气应用'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('确定'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
+                  switch (choice) {
+                    case '刷新':
+                      _refreshWeatherData(context);
+                      break;
+                    case '定位':
+                      _getCurrentLocation(context, weatherProvider);
+                      break;
+                    case '切换主题':
+                      {
+                        // sleep(Duration(microseconds: 300));
+                        var theme = AdaptiveTheme.of(context).mode;
+                        if (theme == AdaptiveThemeMode.light) {
+                          AdaptiveTheme.of(context).setDark();
+                        } else {
+                          AdaptiveTheme.of(context).setLight();
+                        }
+                      }
+                      break;
+                    case '关于':
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('关于'),
+                            content: const Text(
+                                '这是一个基于 Flutter 的天气应用, 调用了和风天气的 API'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('确定'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      break;
+                    default:
+                      print('Unknown choice: $choice');
                   }
                 },
                 itemBuilder: (BuildContext context) {
@@ -140,22 +148,16 @@ class _HomePageState extends State<HomePage>
                       value: '切换主题',
                       child: Row(
                         children: [
-                          // Icon(Icons.light_mode),
-                          // Text('切换主题'),
-                          if (weatherProvider.isDarkMode)
-                            Icon(Icons.light_mode)
+                          if (AdaptiveTheme.of(context).mode ==
+                              AdaptiveThemeMode.light)
+                            Icon(Icons.dark_mode)
                           else
-                            Icon(Icons.dark_mode),
-                          // Icon(Icons.),
+                            Icon(Icons.light_mode),
                           SizedBox(width: 10),
-                          if (weatherProvider.isDarkMode)
-                            Text('切换到白天模式')
-                          else
-                            Text('切换到夜间模式'),
+                          Text('切换主题'),
                         ],
                       ),
                     ),
-
                     PopupMenuItem<String>(
                       value: '关于',
                       child: Row(
@@ -166,7 +168,6 @@ class _HomePageState extends State<HomePage>
                         ],
                       ),
                     ),
-
                   ];
                 },
               ),
@@ -206,12 +207,6 @@ class _HomePageState extends State<HomePage>
   Future<void> _getCurrentLocation(
       BuildContext context, WeatherProvider provider) async {
     if (GetIt.I.isRegistered<Position>()) {
-      // print ("位置信息已获取");
-      //   toastification.show(
-      //     context: context,
-      //     title: Text('位置信息已获取, 无需重复获取'),
-      //     autoCloseDuration: const Duration(seconds: 5),
-      //   );
       var position = GetIt.I.get<Position>();
 
       toastification.show(

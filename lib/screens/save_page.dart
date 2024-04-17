@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 import 'package:xidian_weather/model/geoInfo.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 // 引入本地存储相关库
@@ -15,15 +16,14 @@ class SavePage extends StatefulWidget {
 }
 
 class _SavePageState extends State<SavePage> {
-
-    // 记录当前选中的卡片索引，-1 表示未选中任何卡片
+  // 记录当前选中的卡片索引，-1 表示未选中任何卡片
   int _selectedIndex = -1;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('已保存的地址'),
+        title: const Text('已保存的地址'),
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, child) {
@@ -32,25 +32,31 @@ class _SavePageState extends State<SavePage> {
             itemBuilder: (context, index) {
               final city = weatherProvider.savedCities![index];
               return Card(
-                 // 根据选中状态设置卡片颜色
-                color: _selectedIndex == index ? Color.fromARGB(255, 108, 108, 108) : Colors.white,
+                // 根据选中状态设置卡片颜色
+                color: _selectedIndex == index
+                    ? Color.fromARGB(255, 108, 108, 108)
+                    : Colors.white,
                 child: ListTile(
-                  title: Text(city.location[0].name ?? '未知',
+                  title: Text(
+                      "${city.location[0].adm1} ${city.location[0].name}",
                       style: TextStyle(fontSize: 20, color: Colors.red)),
                   subtitle: Text(
                       "ID: ${city.location[0].id}\nlat: ${city.location[0].lat ?? '未知'} lon: ${city.location[0].lon ?? '未知'}",
                       style: TextStyle(fontSize: 15, color: Colors.blue)),
                   onTap: () {
-                      setState(() {
+                    setState(() {
                       _selectedIndex = index;
                     });
-                    
+                    toastification.show(
+                      context: context,
+                      title: Text('成功切换地区到 ${city.location[0].name}, 正在刷新天气信息'),
+                      autoCloseDuration: const Duration(seconds: 2),
+                    );
+
                     weatherProvider.updateGeoInfo(city);
                     weatherProvider.loadWeatherDataByLocation(
                       double.parse(city.location[0].lat),
                       double.parse(city.location[0].lon),
-
-                      
                     );
                   },
                 ),

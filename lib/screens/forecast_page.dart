@@ -12,17 +12,26 @@ class ForecastPage extends StatefulWidget {
 }
 
 class _ForecastPageState extends State<ForecastPage> {
-  LineChartData buildTempData(
-      List<FlSpot> tempMaxList,List <FlSpot> tempMinList  ,List<Daily> dailyForecasts) {
+  // 构建温度图数据
+  LineChartData buildTempData(List<FlSpot> tempMaxList,
+      List<FlSpot> tempMinList, List<Daily> dailyForecasts) {
+    double maxY = tempMaxList.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+    double minY = tempMinList.map((e) => e.y).reduce((a, b) => a < b ? a : b);
+
+    // 计算interval
+    double interval = (maxY - minY) / 4;
+
+    // 将minY和maxY调整为interval的整数倍
+    minY = (minY / interval).floor() * interval;
+    maxY = (maxY / interval).ceil() * interval;
+
     return LineChartData(
       minX: 0,
       maxX: 6,
-      minY: tempMinList.map((e) => e.y).reduce((a, b) => a < b ? a : b) - 5,
-      maxY: tempMaxList.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 5,
-
+      minY: minY,
+      maxY: maxY,
       lineBarsData: [
         LineChartBarData(
-          
           spots: tempMaxList,
           isCurved: true,
           barWidth: 3,
@@ -32,7 +41,6 @@ class _ForecastPageState extends State<ForecastPage> {
             show: true,
           ),
         ),
-
         LineChartBarData(
           spots: tempMinList,
           isCurved: true,
@@ -51,26 +59,114 @@ class _ForecastPageState extends State<ForecastPage> {
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: Text('温度(℃)'),
-          
+          axisNameWidget: Text(
+            '温度(℃)',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          axisNameSize: 30,
           sideTitles: SideTitles(
-
-              showTitles: true,
-              interval: (tempMaxList
-                          .map((e) => e.y)
-                          .reduce((a, b) => a > b ? a : b) -
-                      tempMaxList.map((e) => e.y).reduce((a, b) => a < b ? a : b)) /
-                  4,
-              reservedSize: 50),
+              showTitles: true, interval: interval, reservedSize: 50),
         ),
         topTitles: AxisTitles(
-          // axisNameWidget: Text('温度折线图'),
           sideTitles: SideTitles(
             showTitles: false,
           ),
         ),
         bottomTitles: AxisTitles(
-          axisNameWidget: Text('日期'),
+          axisNameWidget: Text(
+            '日期',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          axisNameSize: 30,
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: 1,
+            getTitlesWidget: (value, _) {
+              final date = dailyForecasts[value.toInt()].fxDate;
+              return Text('${date.day}');
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 构建湿度图数据
+  LineChartData buildHumidityData(
+      List<FlSpot> humiditySpots, List<Daily> dailyForecasts) {
+    double maxY = humiditySpots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+    double minY = 0; // 湿度最低为0
+
+    // 计算interval
+    double interval = (maxY - minY) / 4;
+
+    // 将minY和maxY调整为interval的整数倍
+    minY = (minY / interval).floor() * interval;
+    maxY = (maxY / interval).ceil() * interval;
+
+    return LineChartData(
+      minX: 0,
+      maxX: 6,
+      minY: minY,
+      maxY: maxY,
+      lineBarsData: [
+        LineChartBarData(
+          spots: humiditySpots,
+          isCurved: true,
+          barWidth: 3,
+          color: Colors.green,
+          isStrokeCapRound: true,
+          belowBarData: BarAreaData(
+            show: true,
+          ),
+        ),
+      ],
+      titlesData: FlTitlesData(
+        rightTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: false,
+          ),
+        ),
+        leftTitles: AxisTitles(
+          axisNameWidget: Text(
+            '湿度(%)',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          axisNameSize: 30,
+          sideTitles: SideTitles(
+              showTitles: true, interval: interval, reservedSize: 50),
+        ),
+        topTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: false,
+          ),
+        ),
+        bottomTitles: AxisTitles(
+          axisNameWidget: Text(
+            '日期',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          axisNameSize: 30,
           sideTitles: SideTitles(
             showTitles: true,
             interval: 1,
@@ -129,9 +225,34 @@ class _ForecastPageState extends State<ForecastPage> {
         ),
         body: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: LineChart(
-            buildTempData(tempMaxSpot, tempMinSpot ,dailyForecasts),
-            // buildTempData(tempMinSpot, dailyForecasts)
+          child: Column(
+            children: [
+              Card(
+                child: SizedBox(
+                  // 使用 SizedBox 限制 LineChart 的大小
+                  height: 200, // 设置图表的高度
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: LineChart(
+                      buildTempData(tempMaxSpot, tempMinSpot, dailyForecasts),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20), // 添加图表之间的间距
+              Card(
+                child: SizedBox(
+                  // 使用 SizedBox 限制 LineChart 的大小
+                  height: 200, // 设置图表的高度
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: LineChart(
+                      buildHumidityData(humiditySpots, dailyForecasts),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
