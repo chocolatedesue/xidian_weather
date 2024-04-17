@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:get_it/get_it.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xidian_weather/model/airInfo.dart';
 // import 'package:xidian_weather/model/dailyForecast.dart';
@@ -27,7 +25,7 @@ class WeatherProvider with ChangeNotifier {
   The7DayWeather? _the7dayWeather;
   List<GeoInfo> _savedCities = [];
   bool _isDarkMode = ThemeMode.system == ThemeMode.dark;
-  bool _autoGetLocation = true;
+  bool _autoGetLocation = false;
 
   int _selectedCityCardIndex = -1;
 
@@ -46,6 +44,7 @@ class WeatherProvider with ChangeNotifier {
 
   void addCityToSavedCities(GeoInfo city) async {
     _savedCities.add(city);
+    await saveSavedCitiesToLocal();
     notifyListeners();
   }
 
@@ -189,17 +188,8 @@ class WeatherProvider with ChangeNotifier {
       _selectedCityCardIndex = selectedCityCardIndex;
     }
 
-    var autoGetLocation = prefs.getBool(AUTOGETLOCATION) ?? true;
-    if (autoGetLocation != false) {
-      _autoGetLocation = autoGetLocation;
-      loadWeatherDataByCityName(_geoInfo!.location[0].name);
-      var status = await Permission.location.status;
-      if (!status.isGranted) {
-        await Permission.location.request();
-      }
-      var location = await Geolocator.getCurrentPosition();
-      loadWeatherDataByLocation(location.latitude, location.longitude);
-    }
+    var autoGetLocation = prefs.getBool(AUTOGETLOCATION) ?? false;
+    _autoGetLocation = autoGetLocation;
 
     notifyListeners();
   }

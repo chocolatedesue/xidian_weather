@@ -20,14 +20,6 @@ class _SavePageState extends State<SavePage> {
   // int _selectedIndex = -1;
 
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-
-    // await GetIt.I.get<WeatherProvider>().loadSavedCities();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -116,17 +108,24 @@ class _SavePageState extends State<SavePage> {
                       return;
                     }
 
+                    showLoadingUI(context);
+
+                    await weatherProvider.updateGeoInfo(city);
+
+                    // await Future.delayed(const Duration(seconds: 1));
+
+                    toastification.show(
+                      context: context,
+                      title: Text('成功切换地区到 ${city.location[0].name}'),
+                      autoCloseDuration: const Duration(seconds: 2),
+                    );
+
+                    Navigator.pop(context);
+
                     setState(() {
                       weatherProvider.updateSelectedCityCardIndex(index);
                     });
 
-                    toastification.show(
-                      context: context,
-                      title: Text('成功切换地区到 ${city.location[0].name}, 正在刷新天气信息'),
-                      autoCloseDuration: const Duration(seconds: 2),
-                    );
-
-                    await weatherProvider.updateGeoInfo(city);
                     // weatherProvider.loadWeatherDataByLocation(
                     //   double.parse(city.location[0].lat),
                     //   double.parse(city.location[0].lon),
@@ -193,6 +192,40 @@ class _SavePageState extends State<SavePage> {
           ),
         ],
       ),
+    );
+  }
+
+// 显示加载 UI
+  void showLoadingUI(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Stack(
+          children: [
+            ModalBarrier(
+              dismissible: false,
+              color: Colors.grey.withOpacity(0.5),
+            ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 20), // 添加一些间距
+                  Text(
+                    '加载天气中',
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -34,6 +34,94 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
+  // bool firstLoading = false;
+
+  Future<void> _getCurrentLocation(
+      BuildContext context, WeatherProvider provider, bool showToast) async {
+    if (GetIt.I.isRegistered<Position>()) {
+      var position = GetIt.I.get<Position>();
+      if (showToast) {
+        toastification.show(
+          context: context,
+          title: const Text('定位成功, 正在获取天气信息'),
+          autoCloseDuration: const Duration(seconds: 2),
+        );
+      }
+      await provider.loadWeatherDataByLocation(
+          position.latitude, position.longitude);
+
+      return;
+    }
+
+    // print("开始获取位置信息");
+    if (showToast) {
+      toastification.show(
+        context: context,
+        title: const Text('正在获取位置信息'),
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+    }
+
+    LocationPermission permission;
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // print("位置服务已禁用");
+      if (showToast) {
+        toastification.show(
+          context: context,
+          title: const Text('错误, 位置服务已禁用，请启用位置服务后重启应用'),
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+      }
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // print("位置权限已拒绝");
+        if (showToast) {
+          toastification.show(
+            context: context,
+            title: const Text('错误, 位置权限已拒绝'),
+            autoCloseDuration: const Duration(seconds: 5),
+          );
+        }
+
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // print("位置权限已永久拒绝");
+      if (showToast) {
+        toastification.show(
+          context: context,
+          title: const Text('错误, 位置权限已永久拒绝'),
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+      }
+
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // print("successfully get location");
+
+    var position = await Geolocator.getCurrentPosition();
+    // GetIt.I<GeoapiService>().getCityName(position.latitude, position.longitude);
+    // GetIt.I.registerSingleton<Position>(position);
+    if (showToast) {
+      toastification.show(
+        context: context,
+        title: const Text('定位成功, 正在获取天气信息'),
+        autoCloseDuration: const Duration(seconds: 2),
+      );
+    }
+
+    await provider.loadWeatherDataByLocation(
+        position.latitude, position.longitude);
+  }
 
   final _widgetOptions = <Widget>[
     const WeatherPage(),
@@ -46,15 +134,16 @@ class _HomePageState extends State<HomePage>
   Future<void> _refreshWeatherData(BuildContext context) async {
     final weatherProvider =
         Provider.of<WeatherProvider>(context, listen: false);
-    if (GetIt.I.isRegistered<Position>()) {
+    if (weatherProvider.geoInfo != null) {
       toastification.show(
         context: context,
         title: const Text('正在刷新天气信息'),
         autoCloseDuration: const Duration(seconds: 2),
       );
-      final geoPosition = GetIt.I.get<Position>();
+      // final geoPosition = GetIt.I.get<Position>();
       await weatherProvider.loadWeatherDataByLocation(
-          geoPosition.latitude, geoPosition.longitude);
+          double.parse(weatherProvider.geoInfo!.location[0].lat),
+          double.parse(weatherProvider.geoInfo!.location[0].lon));
       toastification.show(
         context: context,
         title: const Text('刷新成功'),
@@ -63,7 +152,7 @@ class _HomePageState extends State<HomePage>
     } else {
       toastification.show(
         context: context,
-        title: const Text('错误, 位置信息未获取'),
+        title: const Text('错误, 位置信息未获取，请先定位或手动选择城市'),
         autoCloseDuration: const Duration(seconds: 5),
       );
     }
@@ -90,7 +179,7 @@ class _HomePageState extends State<HomePage>
                       _refreshWeatherData(context);
                       break;
                     case '定位':
-                      _getCurrentLocation(context, weatherProvider);
+                      _getCurrentLocation(context, weatherProvider, true);
                       break;
                     case '切换主题':
                       {
@@ -262,8 +351,8 @@ class _HomePageState extends State<HomePage>
                       child: StatefulBuilder(
                         builder: (BuildContext context, StateSetter setState) {
                           return CheckboxListTile(
-                            title: Text('自动获取位置'),
-                            secondary: Icon(Icons.auto_mode),
+                            title: const Text('自动获取位置'),
+                            secondary: const Icon(Icons.auto_mode),
                             value: weatherProvider.autoGetLocation,
                             onChanged: (value) {
                               setState(() {
@@ -321,82 +410,5 @@ class _HomePageState extends State<HomePage>
     setState(() {
       _selectedIndex = index;
     });
-  }
-
-  Future<void> _getCurrentLocation(
-      BuildContext context, WeatherProvider provider) async {
-    if (GetIt.I.isRegistered<Position>()) {
-      var position = GetIt.I.get<Position>();
-
-      toastification.show(
-        context: context,
-        title: const Text('定位成功, 正在获取天气信息'),
-        autoCloseDuration: const Duration(seconds: 2),
-      );
-      await provider.loadWeatherDataByLocation(
-          position.latitude, position.longitude);
-
-      return;
-    }
-
-    // print("开始获取位置信息");
-    toastification.show(
-      context: context,
-      title: const Text('正在获取位置信息'),
-      autoCloseDuration: const Duration(seconds: 5),
-    );
-
-    LocationPermission permission;
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      print("位置服务已禁用");
-      toastification.show(
-        context: context,
-        title: const Text('错误, 位置服务已禁用，请启用位置服务后重启应用'),
-        autoCloseDuration: const Duration(seconds: 5),
-      );
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        print("位置权限已拒绝");
-        toastification.show(
-          context: context,
-          title: const Text('错误, 位置权限已拒绝'),
-          autoCloseDuration: const Duration(seconds: 5),
-        );
-
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      print("位置权限已永久拒绝");
-      toastification.show(
-        context: context,
-        title: const Text('错误, 位置权限已永久拒绝'),
-        autoCloseDuration: const Duration(seconds: 5),
-      );
-
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    // print("successfully get location");
-
-    var position = await Geolocator.getCurrentPosition();
-    // GetIt.I<GeoapiService>().getCityName(position.latitude, position.longitude);
-    // GetIt.I.registerSingleton<Position>(position);
-
-    toastification.show(
-      context: context,
-      title: const Text('定位成功, 正在获取天气信息'),
-      autoCloseDuration: const Duration(seconds: 2),
-    );
-
-    await provider.loadWeatherDataByLocation(
-        position.latitude, position.longitude);
   }
 }

@@ -9,9 +9,7 @@ import 'package:xidian_weather/model/geoInfo.dart';
 // import 'package:xidian_weather/model/geoPositon.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
 import 'package:xidian_weather/service/weatherapi_service.dart';
-import 'dart:developer' as developer;
 
-import 'package:xidian_weather/service/weatherapi_service.dart';
 // import 'package:geolocator/geolocator.dart';
 
 //  import 'package:my_app/example.dart';
@@ -54,7 +52,7 @@ void main() {
 
   test ("get_it test ", () async {
     setupData();
-    sleep(Duration(seconds: 1));
+    sleep(const Duration(seconds: 1));
     var position = GetIt.I.get<Position>();
 
     print ('position: $position');

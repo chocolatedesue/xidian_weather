@@ -15,6 +15,8 @@ class WeatherPage extends StatefulWidget {
 }
 
 class _WeatherPageState extends State<WeatherPage> {
+  bool isWaitLoading = false;
+
   Future<void> _refreshWeatherData(BuildContext context) async {
     if (GetIt.I.isRegistered<Position>()) {
       final geoPosition = GetIt.I<Position>();
@@ -27,10 +29,15 @@ class _WeatherPageState extends State<WeatherPage> {
 
     // ... (使用 weatherProvider 更新天气数据)
     setState(() {}); // 更新 UI
+    isWaitLoading = false;
   }
 
   @override
   Widget build(BuildContext context) {
+    // if (isWaitLoading) {
+    //   return const Center(child: CircularProgressIndicator());
+    // }
+
     final weatherProvider = Provider.of<WeatherProvider>(context);
     final weatherInfo = weatherProvider.weatherInfo;
     final geoInfo = weatherProvider.geoInfo;
@@ -75,7 +82,8 @@ class _WeatherPageState extends State<WeatherPage> {
           ),
           const SizedBox(height: 10),
           // 日期和时间
-          Text("数据观测时间: ${weatherInfo.updateTime}\n经度: ${geoInfo.location[0].lon} 纬度: ${geoInfo.location[0].lat}"),
+          Text(
+              "数据观测时间: ${weatherInfo.updateTime}\n经度: ${geoInfo.location[0].lon} 纬度: ${geoInfo.location[0].lat}"),
           const SizedBox(height: 20),
           // 中间：天气图标、温度和状况 (使用 Card 和 Flexible)
           Card(
@@ -113,7 +121,8 @@ class _WeatherPageState extends State<WeatherPage> {
                   Column(
                     children: [
                       const Icon(Icons.wind_power),
-                      Text('${weatherInfo.now.windDir} ${weatherInfo.now.windScale}级'), // 显示风向和风力
+                      Text(
+                          '${weatherInfo.now.windDir} ${weatherInfo.now.windScale}级'), // 显示风向和风力
                     ],
                   ),
                   Column(
