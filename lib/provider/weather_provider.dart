@@ -100,7 +100,6 @@ class WeatherProvider with ChangeNotifier {
 
   // 使用 _fetchData 函数获取天气数据
   Future<void> loadWeatherDataByLocation(double lat, double lon) async {
-
     await _fetchData(() async {
       final geoapiService = GetIt.I<GeoapiService>();
       final weatherService = GetIt.I<WeatherService>();
@@ -190,8 +189,8 @@ class WeatherProvider with ChangeNotifier {
       _selectedCityCardIndex = selectedCityCardIndex;
     }
 
-    var autoGetLocation = prefs.getBool(AUTOGETLOCATION);
-    if (autoGetLocation != null) {
+    var autoGetLocation = prefs.getBool(AUTOGETLOCATION) ?? true;
+    if (autoGetLocation != false) {
       _autoGetLocation = autoGetLocation;
       loadWeatherDataByCityName(_geoInfo!.location[0].name);
       var status = await Permission.location.status;
