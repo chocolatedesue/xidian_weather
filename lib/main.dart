@@ -3,24 +3,27 @@ import 'dart:convert';
 // import 'package:dynamic_color/dynamic_color.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:flutter/widgets.dart';
 // import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:xidian_weather/model/geoInfo.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 import 'package:xidian_weather/screens/homepage.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
 import 'package:xidian_weather/service/weatherapi_service.dart';
+import 'package:xidian_weather/util/apiTest.dart';
+// import 'package:xidian_weather/theme/app_theme.dart';
+import 'package:xidian_weather/util/const.dart';
 // import 'package:xidian_weather/theme/app_theme.dart';
 // import 'package:xidian_weather/theme/app_theme.dart';
 
 // bool _isDemoUsingDynamicColors = false;
 
 // Fictitious brand color.
-const _brandBlue = Color(0xFF1E88E5);
+// const _brandBlue = Color(0xFF1E88E5);
 
 // CustomColors lightCustomColors = const CustomColors(danger: Color(0xFFE53935));
 // CustomColors darkCustomColors = const CustomColors(danger: Color(0xFFEF9A9A));
@@ -40,7 +43,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     var prefs = GetIt.I<SharedPreferences>();
     var themeMode =
-        prefs.getBool('darkMode') ?? ThemeMode.system == ThemeMode.dark
+        prefs.getBool(ISDARKMODE) ?? ThemeMode.system == ThemeMode.dark
             ? AdaptiveThemeMode.dark
             : AdaptiveThemeMode.light;
 
@@ -65,13 +68,7 @@ Future<void> setupData() async {
   // WidgetsFlutterBinding.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   // await DynamicColorPlugin.initial();
-  String apiKey = 'a39653de05304df4a1aa614bba622fef';
-  GetIt.I.registerSingleton<WeatherService>(
-    WeatherService(apiKey),
-  );
-  GetIt.I.registerSingleton<GeoapiService>(
-    GeoapiService(apiKey),
-  );
+  // String apiKey = 'a39653de05304df4a1aa614bba622fef';
 
   GetIt.I.registerSingleton<WeatherProvider>(
     WeatherProvider(),
@@ -81,18 +78,28 @@ Future<void> setupData() async {
 
   GetIt.I.registerSingleton<SharedPreferences>(prefs);
 
-  var positionStr = prefs.getString('position') ?? '';
-  if (positionStr.isNotEmpty) {
-    var positionJson = jsonDecode(positionStr);
-    Position position = Position.fromMap(positionJson);
-    GetIt.I.registerSingleton<Position>(position);
+  //  use flutter_secure_storage to read and write the api key
+  const storage = FlutterSecureStorage();
+
+  String apiKey =
+      await storage.read(key: APIKEY) ?? 'a39653de05304df4a1aa614bba622fef';
+
+  if (!await ApiTest.testApikey(apiKey)) {
+    apiKey = 'a39653de05304df4a1aa614bba622fef';
+    // TODO: 显示api无效信息
   }
 
-  var savedCityStrList = prefs.getStringList('savedCityList');
-  if (savedCityStrList != null) {
-    var savedCityList = savedCityStrList.map((e) => jsonDecode(e)).toList();
-    List<GeoInfo> savedCities =
-        savedCityList.map((e) => GeoInfo.fromJson(e)).toList();
-    GetIt.I<WeatherProvider>().updateSavedCities(savedCities);
-  }
+  GetIt.I.registerSingleton<WeatherService>(
+    WeatherService(apiKey),
+  );
+  GetIt.I.registerSingleton<GeoapiService>(
+    GeoapiService(apiKey),
+  );
+
+  await GetIt.I.get<WeatherProvider>().loadAllSavedData();
+
+  // var savedCityStrList = prefs.getStringList(SAVEDCITIES);
+  // if (savedCityStrList != null) {
+
+  // }
 }

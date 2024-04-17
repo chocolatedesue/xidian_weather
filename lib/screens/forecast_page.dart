@@ -3,10 +3,13 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:xidian_weather/model/geoInfo.dart';
 import 'package:xidian_weather/model/my7DayWeather.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 
 class ForecastPage extends StatefulWidget {
+  const ForecastPage({super.key});
+
   @override
   _ForecastPageState createState() => _ForecastPageState();
 }
@@ -45,7 +48,7 @@ class _ForecastPageState extends State<ForecastPage> {
           spots: tempMinList,
           isCurved: true,
           barWidth: 3,
-          color: Color.fromRGBO(0, 0, 255, 1),
+          color: const Color.fromRGBO(0, 0, 255, 1),
           isStrokeCapRound: true,
           belowBarData: BarAreaData(
             show: true,
@@ -53,38 +56,38 @@ class _ForecastPageState extends State<ForecastPage> {
         ),
       ],
       titlesData: FlTitlesData(
-        rightTitles: AxisTitles(
+        rightTitles: const AxisTitles(
           sideTitles: SideTitles(
             showTitles: false,
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: Text(
+          axisNameWidget: const Text(
             '温度(℃)',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              // color: Colors.white,
             ),
           ),
           axisNameSize: 30,
           sideTitles: SideTitles(
               showTitles: true, interval: interval, reservedSize: 50),
         ),
-        topTitles: AxisTitles(
+        topTitles: const AxisTitles(
           sideTitles: SideTitles(
             showTitles: false,
           ),
         ),
         bottomTitles: AxisTitles(
-          axisNameWidget: Text(
+          axisNameWidget: const Text(
             '日期',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              // color: Colors.white,
             ),
           ),
           axisNameSize: 30,
@@ -132,38 +135,38 @@ class _ForecastPageState extends State<ForecastPage> {
         ),
       ],
       titlesData: FlTitlesData(
-        rightTitles: AxisTitles(
+        rightTitles: const AxisTitles(
           sideTitles: SideTitles(
             showTitles: false,
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: Text(
+          axisNameWidget: const Text(
             '湿度(%)',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              // color: Colors.white,
             ),
           ),
           axisNameSize: 30,
           sideTitles: SideTitles(
               showTitles: true, interval: interval, reservedSize: 50),
         ),
-        topTitles: AxisTitles(
+        topTitles: const AxisTitles(
           sideTitles: SideTitles(
             showTitles: false,
           ),
         ),
         bottomTitles: AxisTitles(
-          axisNameWidget: Text(
+          axisNameWidget: const Text(
             '日期',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              // color: Colors.white,
             ),
           ),
           axisNameSize: 30,
@@ -185,13 +188,14 @@ class _ForecastPageState extends State<ForecastPage> {
     final weatherProvider = Provider.of<WeatherProvider>(context);
     final dailyForecasts = weatherProvider.the7dayWeather?.daily;
 
-    if (dailyForecasts == null || dailyForecasts.isEmpty) {
+    GeoInfo? city = weatherProvider.geoInfo;
+    if (dailyForecasts == null || dailyForecasts.isEmpty || city == null) {
       // 数据为空，显示空页面
       return Scaffold(
         appBar: AppBar(
-          title: Text('7 天预报'),
+          title: const Text('7 天预报'),
         ),
-        body: Center(
+        body: const Center(
           child: Text('暂无预报数据'),
         ),
       );
@@ -221,7 +225,8 @@ class _ForecastPageState extends State<ForecastPage> {
 
       return Scaffold(
         appBar: AppBar(
-          title: Text('7 天预报'),
+          title:
+              Text('${city.location[0].adm1} ${city.location[0].adm2} ${city.location[0].name} 7 天预报'),
         ),
         body: Padding(
           padding: const EdgeInsets.all(20.0),

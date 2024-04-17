@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get_it/get_it.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xidian_weather/model/airInfo.dart';
 // import 'package:xidian_weather/model/dailyForecast.dart';
@@ -12,6 +13,7 @@ import 'package:xidian_weather/model/cur_weatherInfo.dart';
 import 'package:xidian_weather/model/my7DayWeather.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
 import 'package:xidian_weather/service/weatherapi_service.dart';
+import 'package:xidian_weather/util/const.dart';
 
 class WeatherProvider with ChangeNotifier {
   bool _isLoading = false;
@@ -25,6 +27,9 @@ class WeatherProvider with ChangeNotifier {
   The7DayWeather? _the7dayWeather;
   List<GeoInfo> _savedCities = [];
   bool _isDarkMode = ThemeMode.system == ThemeMode.dark;
+  bool _autoGetLocation = true;
+
+  int _selectedCityCardIndex = -1;
 
   // 使用 getter 方法获取数据，避免直接暴露私有变量
   bool get isLoading => _isLoading;
@@ -35,42 +40,47 @@ class WeatherProvider with ChangeNotifier {
   The7DayWeather? get the7dayWeather => _the7dayWeather;
   List<GeoInfo>? get savedCities => _savedCities;
   bool get isDarkMode => _isDarkMode;
-
+  int get selectedCityCardIndex => _selectedCityCardIndex;
+  bool get autoGetLocation => _autoGetLocation;
   // get isDarkMode => null;
 
-  void addCityToSavedCities(GeoInfo city) {
+  void addCityToSavedCities(GeoInfo city) async {
     _savedCities.add(city);
-
     notifyListeners();
-    saveSavedCitiesToLocal();
   }
 
-//   Future<void> _saveStateInBackground(String key, dynamic value) async {
-//   ReceivePort receivePort = ReceivePort();
-//   Isolate isolate = await Isolate.spawn(_isolateEntrypoint, receivePort.sendPort);
+  Future saveAutoGetLocationToLoacl(bool autoGetLocation) async {
+    var prefs = GetIt.I.get<SharedPreferences>();
+    await prefs.setBool(AUTOGETLOCATION, autoGetLocation);
+  }
 
-//   // 获取来自 Isolate 的 SendPort
-//   SendPort sendPort = await receivePort.first;
+  Future<void> updateAutoGetLocation(bool autoGetLocation) async {
+    _autoGetLocation = autoGetLocation;
+    await saveAutoGetLocationToLoacl(autoGetLocation);
+    notifyListeners();
+  }
 
-//   // 发送状态数据到 Isolate
-//   sendPort.send(MapEntry(key, value));
-
-//   // 监听来自 Isolate 的保存完成消息
-//   receivePort.listen((message) {
-//     print(message);
-//     receivePort.close();
-//     isolate.kill();
-//   });
-// }
-
-  // TODO: sqlite 实现savedCity增删改查
+  Future<void> saveAllWeatherInfoToLoacl() async {
+    var prefs = GetIt.I.get<SharedPreferences>();
+    await prefs.setString(CURWEATHERINFO, jsonEncode(_weatherInfo!.toJson()));
+    await prefs.setString(AIRINFO, jsonEncode(_airInfo!.toJson()));
+    await prefs.setString(
+        THE7DAYWEATHER, jsonEncode(_the7dayWeather!.toJson()));
+  }
 
   Future<void> saveSavedCitiesToLocal() async {
-    var pref = await SharedPreferences.getInstance();
-    await pref.setStringList(
-      'savedCities',
+    // var prefs = await SharedPreferences.getInstance();
+    var prefs = GetIt.I.get<SharedPreferences>();
+    await prefs.setStringList(
+      SAVEDCITIES,
       _savedCities.map((e) => jsonEncode(e.toJson())).toList(),
     );
+  }
+
+  Future<void> saveGeoInfoToLocal() async {
+    // var prefs = await SharedPreferences.getInstance();
+    var prefs = GetIt.I.get<SharedPreferences>();
+    await prefs.setString(GEOINFO, jsonEncode(_geoInfo!.toJson()));
   }
 
   // 将获取数据的逻辑提取到单独的函数中
@@ -98,6 +108,7 @@ class WeatherProvider with ChangeNotifier {
       _airInfo = await weatherService.getCityAirByPosition(lat, lon);
       _the7dayWeather =
           (await weatherService.get7DayWeatherByPosition(lat, lon));
+      saveAllWeatherInfoToLoacl();
     });
   }
 
@@ -113,38 +124,94 @@ class WeatherProvider with ChangeNotifier {
           await weatherService.getCityAirByGeoID(_geoInfo!.location[0].id);
       _the7dayWeather =
           await weatherService.get7DayWeatherByGeoID(_geoInfo!.location[0].id);
+
+      saveAllWeatherInfoToLoacl();
+      // await saveState();
     });
   }
 
   // 更新 geoInfo 并通知监听器
-  void updateGeoInfo(GeoInfo city) {
-    // _geoInfo = city;
-    loadWeatherDataByCityName(city.location[0].name);
-
+  Future<void> updateGeoInfo(GeoInfo city) async {
+    _geoInfo = city;
+    await loadWeatherDataByCityName(city.location[0].name);
+    // await saveGeoInfoToLocal();
     notifyListeners();
   }
 
   void updateThemeMode(bool isDark) {
     _isDarkMode = isDark;
+    GetIt.I.get<SharedPreferences>().setBool(ISDARKMODE, isDark);
     notifyListeners();
   }
 
-  void updateSavedCities(List<GeoInfo> cities) {
+  Future<void> updateSavedCities(List<GeoInfo> cities) async {
     _savedCities = cities;
+
+    await saveSavedCitiesToLocal();
     notifyListeners();
   }
 
-  Future<void> loadSavedCities() async {
-    var pref = await SharedPreferences.getInstance();
-    var savedCities = pref.getStringList('savedCities');
+  Future<void> loadAllSavedData() async {
+    // var prefs = await SharedPreferences.getInstance();
+    var prefs = GetIt.I.get<SharedPreferences>();
+    var savedCities = prefs.getStringList(SAVEDCITIES);
     if (savedCities != null) {
       _savedCities =
           savedCities.map((e) => GeoInfo.fromJson(jsonDecode(e))).toList();
     }
+    var geoInfoStr = prefs.getString(GEOINFO);
+    if (geoInfoStr != null) {
+      _geoInfo = GeoInfo.fromJson(jsonDecode(geoInfoStr));
+      // await loadWeatherDataByCityName(_geoInfo!.location[0].name);
+    }
+    var curWeatherInfoStr = prefs.getString(CURWEATHERINFO);
+    if (curWeatherInfoStr != null) {
+      _weatherInfo = CurWeatherInfo.fromJson(jsonDecode(curWeatherInfoStr));
+    }
+
+    var airInfoStr = prefs.getString(AIRINFO);
+    if (airInfoStr != null) {
+      _airInfo = AirInfo.fromJson(jsonDecode(airInfoStr));
+    }
+
+    var the7dayWeatherStr = prefs.getString(THE7DAYWEATHER);
+    if (the7dayWeatherStr != null) {
+      _the7dayWeather = The7DayWeather.fromJson(jsonDecode(the7dayWeatherStr));
+    }
+
+    var isDarkMode = prefs.getBool(ISDARKMODE);
+    if (isDarkMode != null) {
+      _isDarkMode = isDarkMode;
+    }
+
+    var selectedCityCardIndex = prefs.getInt(SELECTEDCITYCARDINDEX);
+    if (selectedCityCardIndex != null) {
+      _selectedCityCardIndex = selectedCityCardIndex;
+    }
+
+    var autoGetLocation = prefs.getBool(AUTOGETLOCATION);
+    if (autoGetLocation != null) {
+      _autoGetLocation = autoGetLocation;
+      loadWeatherDataByCityName(_geoInfo!.location[0].name);
+      var status = await Permission.location.status;
+      if (!status.isGranted) {
+        await Permission.location.request();
+      }
+      var location = await Geolocator.getCurrentPosition();
+      loadWeatherDataByLocation(location.latitude, location.longitude);
+    }
+
     notifyListeners();
   }
 
   Future<void> saveState() async {
     await saveSavedCitiesToLocal();
+    await saveGeoInfoToLocal();
+  }
+
+  void updateSelectedCityCardIndex(int index) {
+    _selectedCityCardIndex = index;
+    GetIt.I.get<SharedPreferences>().setInt(SELECTEDCITYCARDINDEX, index);
+    notifyListeners();
   }
 }

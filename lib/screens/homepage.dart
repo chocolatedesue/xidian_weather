@@ -1,22 +1,27 @@
 // import 'package:dynamic_color/dynamic_color.dart';
-import 'dart:io';
+// import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:flutter_city_picker/city_picker.dart';
 import 'package:geolocator/geolocator.dart';
-// import 'package:get/get.dart';
 // import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 // import 'package:geolocator/geolocator.dart';
 // import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:xidian_weather/screens/forecast_page.dart';
 import 'package:xidian_weather/screens/save_page.dart';
 import 'package:xidian_weather/screens/weather_page.dart';
+import 'package:xidian_weather/service/geoapi_service.dart';
+import 'package:xidian_weather/service/weatherapi_service.dart';
+import 'package:xidian_weather/util/apiTest.dart';
+import 'package:xidian_weather/util/const.dart';
 // import 'package:synchronized/synchronized.dart';
 // import 'weather_service.dart';
 
@@ -31,20 +36,20 @@ class _HomePageState extends State<HomePage>
   int _selectedIndex = 0;
 
   final _widgetOptions = <Widget>[
-    WeatherPage(),
-    ForecastPage(),
-    SavePage(),
+    const WeatherPage(),
+    const ForecastPage(),
+    const SavePage(),
   ];
 
+  get _isChecked => null;
+
   Future<void> _refreshWeatherData(BuildContext context) async {
-    // TODO: 在这里执行刷新操作，例如重新获取天气数据
     final weatherProvider =
         Provider.of<WeatherProvider>(context, listen: false);
-    // ... (使用 weatherProvider 更新天气数据)
     if (GetIt.I.isRegistered<Position>()) {
       toastification.show(
         context: context,
-        title: Text('正在刷新天气信息'),
+        title: const Text('正在刷新天气信息'),
         autoCloseDuration: const Duration(seconds: 2),
       );
       final geoPosition = GetIt.I.get<Position>();
@@ -52,13 +57,13 @@ class _HomePageState extends State<HomePage>
           geoPosition.latitude, geoPosition.longitude);
       toastification.show(
         context: context,
-        title: Text('刷新成功'),
+        title: const Text('刷新成功'),
         autoCloseDuration: const Duration(seconds: 2),
       );
     } else {
       toastification.show(
         context: context,
-        title: Text('错误, 位置信息未获取'),
+        title: const Text('错误, 位置信息未获取'),
         autoCloseDuration: const Duration(seconds: 5),
       );
     }
@@ -72,13 +77,13 @@ class _HomePageState extends State<HomePage>
       builder: (context, weatherProvider, child) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Weather App'),
+            title: const Text('西电天气-雾霾检测'),
             centerTitle: true,
             // backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             actions: [
               // 使用 PopupMenuButton 创建下拉菜单
               PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert), // 使用 "..." 图标
+                icon: const Icon(Icons.more_vert), // 使用 "..." 图标
                 onSelected: (String choice) {
                   switch (choice) {
                     case '刷新':
@@ -93,8 +98,14 @@ class _HomePageState extends State<HomePage>
                         var theme = AdaptiveTheme.of(context).mode;
                         if (theme == AdaptiveThemeMode.light) {
                           AdaptiveTheme.of(context).setDark();
+                          GetIt.I
+                              .get<SharedPreferences>()
+                              .setBool(ISDARKMODE, true);
                         } else {
                           AdaptiveTheme.of(context).setLight();
+                          GetIt.I
+                              .get<SharedPreferences>()
+                              .setBool(ISDARKMODE, false);
                         }
                       }
                       break;
@@ -103,28 +114,97 @@ class _HomePageState extends State<HomePage>
                         context: context,
                         builder: (context) {
                           return AlertDialog(
-                            title: Text('关于'),
+                            title: const Text('关于'),
                             content: const Text(
-                                '这是一个基于 Flutter 的天气应用, 调用了和风天气的 API'),
+                                '这是一个基于 Flutter 的天气应用, 调用了和风天气的 API\n作者邮件: chocolatedesue@outlook.com'),
                             actions: [
                               TextButton(
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
-                                child: Text('确定'),
+                                child: const Text('确定'),
                               ),
                             ],
                           );
                         },
                       );
                       break;
+                    case '设置':
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          String apiKey = '';
+                          return StatefulBuilder(
+                            builder: (BuildContext context, setState) {
+                              return AlertDialog(
+                                title: const Text('设置'),
+                                content: TextField(
+                                  textInputAction: TextInputAction.done,
+                                  decoration: const InputDecoration(
+                                    labelText: '请输入和风天气的 API Key',
+                                  ),
+                                  onChanged: (value) {
+                                    apiKey = value;
+                                  },
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () async {
+                                      if (apiKey.isEmpty) {
+                                        toastification.show(
+                                          context: context,
+                                          title: const Text('API Key 不能为空'),
+                                        );
+                                        return;
+                                      }
+                                      if (!await ApiTest.testApikey(apiKey)) {
+                                        toastification.show(
+                                          context: context,
+                                          title: const Text('API Key 无效'),
+                                        );
+                                        return;
+                                      }
+
+                                      await const FlutterSecureStorage()
+                                          .write(key: APIKEY, value: apiKey);
+
+                                      GetIt.I
+                                          .get<WeatherService>()
+                                          .updateAuthKey(apiKey);
+                                      GetIt.I
+                                          .get<GeoapiService>()
+                                          .updateAuthKey(apiKey);
+
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('确定'),
+                                  ),
+                                  // 添加取消
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('取消'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+                      break;
+
                     default:
-                      print('Unknown choice: $choice');
+                      // print('Unknown choice: $choice');
+                      toastification.show(
+                        context: context,
+                        title: Text('未知选项: $choice'),
+                      );
                   }
                 },
                 itemBuilder: (BuildContext context) {
                   return [
-                    PopupMenuItem<String>(
+                    const PopupMenuItem<String>(
                       value: '刷新',
                       child: Row(
                         children: [
@@ -134,7 +214,7 @@ class _HomePageState extends State<HomePage>
                         ],
                       ),
                     ),
-                    PopupMenuItem<String>(
+                    const PopupMenuItem<String>(
                       value: '定位',
                       child: Row(
                         children: [
@@ -150,15 +230,38 @@ class _HomePageState extends State<HomePage>
                         children: [
                           if (AdaptiveTheme.of(context).mode ==
                               AdaptiveThemeMode.light)
-                            Icon(Icons.dark_mode)
+                            const Icon(Icons.dark_mode)
                           else
-                            Icon(Icons.light_mode),
+                            const Icon(Icons.light_mode),
+                          const SizedBox(width: 10),
+                          const Text('切换主题'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: '设置',
+                      child: Row(
+                        children: [
+                          Icon(Icons.settings),
                           SizedBox(width: 10),
-                          Text('切换主题'),
+                          Text('设置API Key'),
                         ],
                       ),
                     ),
                     PopupMenuItem<String>(
+                        value: '自动获取位置',
+                        child: CheckboxListTile(
+                          title: Text('自动获取位置'),
+                          secondary: Icon(Icons.auto_mode),
+                          value: weatherProvider.autoGetLocation,
+                          onChanged: (value) {
+                            // 更新状态
+                            setState(() {
+                              weatherProvider.updateAutoGetLocation(value!);
+                            });
+                          },
+                        )),
+                    const PopupMenuItem<String>(
                       value: '关于',
                       child: Row(
                         children: [
@@ -178,19 +281,19 @@ class _HomePageState extends State<HomePage>
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: Icon(Icons.home),
-                label: 'Home',
+                label: '详情',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.cloud),
-                label: 'forecast',
+                label: '预测',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.save),
-                label: 'save',
+                icon: Icon(Icons.favorite),
+                label: '收藏',
               ),
             ],
             currentIndex: _selectedIndex,
-            selectedItemColor: Colors.amber[800],
+            selectedItemColor: Theme.of(context).colorScheme.primary,
             onTap: _onItemTapped,
           ),
         );
@@ -211,7 +314,7 @@ class _HomePageState extends State<HomePage>
 
       toastification.show(
         context: context,
-        title: Text('定位成功, 正在获取天气信息'),
+        title: const Text('定位成功, 正在获取天气信息'),
         autoCloseDuration: const Duration(seconds: 2),
       );
       await provider.loadWeatherDataByLocation(
@@ -223,7 +326,7 @@ class _HomePageState extends State<HomePage>
     // print("开始获取位置信息");
     toastification.show(
       context: context,
-      title: Text('正在获取位置信息'),
+      title: const Text('正在获取位置信息'),
       autoCloseDuration: const Duration(seconds: 5),
     );
 
@@ -233,7 +336,7 @@ class _HomePageState extends State<HomePage>
       print("位置服务已禁用");
       toastification.show(
         context: context,
-        title: Text('错误, 位置服务已禁用，请启用位置服务后重启应用'),
+        title: const Text('错误, 位置服务已禁用，请启用位置服务后重启应用'),
         autoCloseDuration: const Duration(seconds: 5),
       );
     }
@@ -245,7 +348,7 @@ class _HomePageState extends State<HomePage>
         print("位置权限已拒绝");
         toastification.show(
           context: context,
-          title: Text('错误, 位置权限已拒绝'),
+          title: const Text('错误, 位置权限已拒绝'),
           autoCloseDuration: const Duration(seconds: 5),
         );
 
@@ -257,7 +360,7 @@ class _HomePageState extends State<HomePage>
       print("位置权限已永久拒绝");
       toastification.show(
         context: context,
-        title: Text('错误, 位置权限已永久拒绝'),
+        title: const Text('错误, 位置权限已永久拒绝'),
         autoCloseDuration: const Duration(seconds: 5),
       );
 
@@ -265,15 +368,15 @@ class _HomePageState extends State<HomePage>
           'Location permissions are permanently denied, we cannot request permissions.');
     }
 
-    print("successfully get location");
+    // print("successfully get location");
 
     var position = await Geolocator.getCurrentPosition();
     // GetIt.I<GeoapiService>().getCityName(position.latitude, position.longitude);
-    GetIt.I.registerSingleton<Position>(position);
+    // GetIt.I.registerSingleton<Position>(position);
 
     toastification.show(
       context: context,
-      title: Text('定位成功, 正在获取天气信息'),
+      title: const Text('定位成功, 正在获取天气信息'),
       autoCloseDuration: const Duration(seconds: 2),
     );
 

@@ -2,7 +2,6 @@
 //
 //     final the7DayWeather = the7DayWeatherFromJson(jsonString);
 
-import 'dart:convert';
 
 
 class The7DayWeather {
