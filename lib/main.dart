@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:xidian_weather/model/geoInfo.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 import 'package:xidian_weather/screens/homepage.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
@@ -22,11 +23,32 @@ const _brandBlue = Color(0xFF1E88E5);
 // CustomColors darkCustomColors = const CustomColors(danger: Color(0xFFEF9A9A));
 // import 'package:geolocator/geolocator.dart';
 void main() async {
-  setupData();
+  await setupData();
   // await DynamicColorPlugin.initialize();
 
   runApp(const MyApp());
 }
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => WeatherProvider(),
+      builder: (context, child) {
+        return const MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Weather App',
+          themeMode: ThemeMode.dark,
+          home: HomePage(),
+        );
+      },
+    );
+  }
+}
+
+
 
 Future<void> setupData() async {
   // setup data
@@ -41,6 +63,10 @@ Future<void> setupData() async {
     GeoapiService(apiKey),
   );
 
+  // GetIt.I.registerSingleton<WeatherProvider>(
+  //   WeatherProvider(),
+  // );
+
   SharedPreferences prefs = await SharedPreferences.getInstance();
   var positionStr = prefs.getString('position') ?? '';
   if (positionStr.isNotEmpty) {
@@ -49,61 +75,43 @@ Future<void> setupData() async {
     GetIt.I.registerSingleton<Position>(position);
   }
 
-
-
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    //  build a weather app
-
-    return ChangeNotifierProvider(
-      create: (context) => WeatherProvider(),
-      child: DynamicColorBuilder(
-        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-          ColorScheme lightColorScheme;
-          ColorScheme darkColorScheme;
-
-          if (lightDynamic != null && darkDynamic != null) {
-            // On Android S+ devices, use the provided dynamic color scheme.
-            // (Recommended) Harmonize the dynamic color scheme' built-in semantic colors.
-            lightColorScheme = lightDynamic.harmonized();
-            // (Optional) Customize the scheme as desired. For example, one might
-            // want to use a brand color to override the dynamic [ColorScheme.secondary].
-            lightColorScheme = lightColorScheme.copyWith(secondary: _brandBlue);
-            // (Optional) If applicable, harmonize custom colors.
-            // lightCustomColors = lightCustomColors.harmonized(lightColorScheme);
-
-            // Repeat for the dark color scheme.
-            darkColorScheme = darkDynamic.harmonized();
-            darkColorScheme = darkColorScheme.copyWith(secondary: _brandBlue);
-            // darkCustomColors = darkCustomColors.harmonized(darkColorScheme);
-
-            _isDemoUsingDynamicColors = true; // ignore, only for demo purposes
-          } else {
-            // Otherwise, use fallback schemes.
-            lightColorScheme = ColorScheme.fromSeed(
-              seedColor: _brandBlue,
-            );
-            darkColorScheme = ColorScheme.fromSeed(
-              seedColor: _brandBlue,
-              brightness: Brightness.dark,
-            );
-          }
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Weather App',
-            theme: ThemeData(colorScheme: lightColorScheme),
-            darkTheme: ThemeData(colorScheme: darkColorScheme),
-            themeMode: ThemeMode.system,
-            home: const HomePage(),
-          );
-        },
-      ),
-    );
+  var savedCityStrList = prefs.getStringList('savedCityList');
+  if (savedCityStrList != null) {
+    var savedCityList = savedCityStrList.map((e) => jsonDecode(e)).toList();
+    List<GeoInfo> savedCities =
+        savedCityList.map((e) => GeoInfo.fromJson(e)).toList();
+    GetIt.I<WeatherProvider>().updateSavedCities(savedCities);
   }
+
+  // GetIt.I.registerSingleton<bool>(false);
+  var isDarkMode =
+      prefs.getBool('isDarkMode') ?? ThemeMode.system == ThemeMode.dark;
+  // GetIt.I<WeatherProvider>().updateThemeMode(isDarkMode);
 }
+
+// class MyApp extends StatefulWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   State<MyApp> createState() => _MyAppState();
+// }
+
+// class _MyAppState extends State<MyApp> {
+//   // This widget is the root of your application.
+//   @override
+//   Widget build(BuildContext context) {
+//     return ChangeNotifierProvider(
+//         create: (context) => WeatherProvider(),
+//         builder: (context, child) {
+//           // final weatherProvider = GetIt.I<WeatherProvider>();
+//           // final weatherProvider = Provider.of<WeatherProvider>(context);
+//           // var themeModeState = weatherProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light;
+//           return const MaterialApp(
+//             debugShowCheckedModeBanner: false,
+//             title: 'Weather App',
+//             themeMode: ThemeMode.dark,
+//             home: HomePage(),
+//           );
+//         });
+//   }
+// }

@@ -64,13 +64,24 @@ void main() {
   test ("api test 3", () async {
     double lat = 34.3416;
     double lon = 108.9398;
-    setupData();
+    await setupData();
     var weatherService = GetIt.I.get<WeatherService>();
     var weatherData = await weatherService.getCityWeatherNowByPosition(lat, lon);
     var airData = await weatherService.getCityAirByPosition(lat, lon);
     print ('weatherData: $weatherData');
     print ('airData: $airData');
 
+  });
+
+  test ("7days weather test", () async {
+    await setupData();
+    var weatherService = GetIt.I.get<WeatherService>();
+    var geoapiService = GetIt.I.get<GeoapiService>();
+
+    GeoInfo geoInfo = await geoapiService.getCurrentGeoIDByCityName('西安');
+    var weatherData = await weatherService.get7DayWeatherByGeoID(geoInfo.location[0].id);
+    var weatherStr = jsonEncode(weatherData.toJson());
+    print ('7days weather: $weatherStr');
   });
 
 

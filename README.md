@@ -9,3 +9,5 @@ A new Flutter project.
 ## TODO:
 1. api中存在可能空值， 未作处理
 2. ios macos位置权限未声明
+3. sqlite 实现savedCity增删改查
+4. test 可能出错，要注释掉sp的初始化

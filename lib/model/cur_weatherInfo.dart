@@ -4,18 +4,18 @@
 
 import 'dart:convert';
 
-WeatherInfo weatherInfoFromJson(String str) => WeatherInfo.fromJson(json.decode(str));
+CurWeatherInfo weatherInfoFromJson(String str) => CurWeatherInfo.fromJson(json.decode(str));
 
-String weatherInfoToJson(WeatherInfo data) => json.encode(data.toJson());
+String weatherInfoToJson(CurWeatherInfo data) => json.encode(data.toJson());
 
-class WeatherInfo {
+class CurWeatherInfo {
     String code;
     String updateTime;
     String fxLink;
     Now now;
     Refer refer;
 
-    WeatherInfo({
+    CurWeatherInfo({
         required this.code,
         required this.updateTime,
         required this.fxLink,
@@ -23,7 +23,7 @@ class WeatherInfo {
         required this.refer,
     });
 
-    factory WeatherInfo.fromJson(Map<String, dynamic> json) => WeatherInfo(
+    factory CurWeatherInfo.fromJson(Map<String, dynamic> json) => CurWeatherInfo(
         code: json["code"],
         updateTime: json["updateTime"],
         fxLink: json["fxLink"],

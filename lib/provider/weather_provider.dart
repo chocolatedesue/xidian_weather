@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xidian_weather/model/airInfo.dart';
+// import 'package:xidian_weather/model/dailyForecast.dart';
 import 'package:xidian_weather/model/geoInfo.dart';
-import 'package:xidian_weather/model/weatherInfo.dart';
+import 'package:xidian_weather/model/cur_weatherInfo.dart';
+import 'package:xidian_weather/model/my7DayWeather.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
 import 'package:xidian_weather/service/weatherapi_service.dart';
 
@@ -11,38 +15,47 @@ class WeatherProvider with ChangeNotifier {
   bool _isLoading = false;
   String _error = '';
 
-  GeoInfo? _geoInfo;
-  WeatherInfo? _weatherInfo;
-  AirInfo? _airInfo;
+  //  check system theme mode
+  
 
+  GeoInfo? _geoInfo;
+  CurWeatherInfo? _weatherInfo;
+  AirInfo? _airInfo;
+  The7DayWeather? _the7dayWeather ;
   List<GeoInfo> _savedCities = [];
+  bool _isDarkMode = ThemeMode.system == ThemeMode.dark;
+ 
+
+
 
   // 使用 getter 方法获取数据，避免直接暴露私有变量
   bool get isLoading => _isLoading;
   String get error => _error;
   GeoInfo? get geoInfo => _geoInfo;
-  WeatherInfo? get weatherInfo => _weatherInfo;
+  CurWeatherInfo? get weatherInfo => _weatherInfo;
   AirInfo? get airInfo => _airInfo;
-  List<GeoInfo> get savedCities => _savedCities;
+  The7DayWeather? get the7dayWeather => _the7dayWeather;
+  List<GeoInfo>? get savedCities => _savedCities;
+  bool get isDarkMode => _isDarkMode;
 
-  get curWeatherInfo => null;
+  // get isDarkMode => null;
 
-  get curGeoInfo => null;
 
-  get curAirInfo => null;
 
   void addCityToSavedCities(GeoInfo city) {
     _savedCities.add(city);
+    saveSavedCitiesToLocal();
     notifyListeners();
   }
 
-  // 将 savedCities 保存到本地存储
-  Future<void> saveSavedCitiesToLocal() async {
-    // 使用 GetIt 获取 SharedPreferences 实例
-    // final prefs = GetIt.I<SharedPreferences>();
-    // 将 savedCities 转换为 JSON 字符串并保存到 SharedPreferences
-  //   TODO: 保存 savedCities 到本地存储
+  // TODO: sqlite 实现savedCity增删改查
 
+  Future<void> saveSavedCitiesToLocal() async {
+    var pref = await SharedPreferences.getInstance();
+    await pref.setStringList(
+      'savedCities', 
+      _savedCities.map((e) => jsonEncode(e.toJson())).toList(),
+    );
   }
 
   // 将获取数据的逻辑提取到单独的函数中
@@ -68,6 +81,7 @@ class WeatherProvider with ChangeNotifier {
       _geoInfo = await geoapiService.getCurrentGeoIDByLocation(lat, lon);
       _weatherInfo = await weatherService.getCityWeatherNowByPosition(lat, lon);
       _airInfo = await weatherService.getCityAirByPosition(lat, lon);
+      _the7dayWeather = (await weatherService.get7DayWeatherByPosition(lat, lon)) ;
     });
   }
 
@@ -79,6 +93,7 @@ class WeatherProvider with ChangeNotifier {
       _geoInfo = await geoapiService.getCurrentGeoIDByCityName(cityName);
       _weatherInfo = await weatherService.getCityWeatherNowByGeoID(_geoInfo!.location[0].id);
       _airInfo = await weatherService.getCityAirByGeoID(_geoInfo!.location[0].id);
+      _the7dayWeather = await weatherService.get7DayWeatherByGeoID(_geoInfo!.location[0].id);
     });
   }
 
@@ -87,6 +102,17 @@ class WeatherProvider with ChangeNotifier {
     // _geoInfo = city;
     loadWeatherDataByCityName(city.location[0].name);
 
+    notifyListeners();
+  }
+
+  void updateThemeMode(bool isDark) {
+    _isDarkMode = isDark;
+    notifyListeners();
+  }
+
+  void updateSavedCities(List<GeoInfo> cities) {
+    _savedCities = cities;
+    
     notifyListeners();
   }
 

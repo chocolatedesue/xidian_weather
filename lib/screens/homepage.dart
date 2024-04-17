@@ -40,9 +40,10 @@ class _HomePageState extends State<HomePage>
     SavePage(),
   ];
 
-  Future<void> _refreshWeatherData(BuildContext context ) async {
+  Future<void> _refreshWeatherData(BuildContext context) async {
     // TODO: 在这里执行刷新操作，例如重新获取天气数据
-    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+    final weatherProvider =
+        Provider.of<WeatherProvider>(context, listen: false);
     // ... (使用 weatherProvider 更新天气数据)
     if (GetIt.I.isRegistered<Position>()) {
       toastification.show(
@@ -51,13 +52,13 @@ class _HomePageState extends State<HomePage>
         autoCloseDuration: const Duration(seconds: 2),
       );
       final geoPosition = GetIt.I.get<Position>();
-      await weatherProvider.loadWeatherDataByLocation(geoPosition.latitude, geoPosition.longitude);
-      toastification.show(context: context,
+      await weatherProvider.loadWeatherDataByLocation(
+          geoPosition.latitude, geoPosition.longitude);
+      toastification.show(
+        context: context,
         title: Text('刷新成功'),
         autoCloseDuration: const Duration(seconds: 2),
-      
       );
-
     } else {
       toastification.show(
         context: context,
@@ -74,28 +75,101 @@ class _HomePageState extends State<HomePage>
     return Consumer<WeatherProvider>(
       builder: (context, weatherProvider, child) {
         return Scaffold(
+
+          // themeMode: weatherProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           appBar: AppBar(
             title: const Text('Weather App'),
             centerTitle: true,
             backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             actions: [
-              IconButton(
-                  onPressed: () async {
-                    await _getCurrentLocation(context, weatherProvider);
-                  },
-                  icon: Icon(
-                    GetIt.I.isRegistered<Position>()
-                        ? Icons.location_on
-                        : Icons.location_off,
-                    color: Theme.of(context).iconTheme.color,
-                  )),
-                    if (kIsWeb || Platform.isMacOS || Platform.isWindows || Platform.isLinux)
-                IconButton(
-                  onPressed: () async {
-                    await _refreshWeatherData(context);
-                  },
-                  icon: Icon(Icons.refresh),
-                ),
+              // 使用 PopupMenuButton 创建下拉菜单
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert), // 使用 "..." 图标
+                onSelected: (String choice) {
+                  if (choice == '刷新') {
+                    _refreshWeatherData(context);
+                  } else if (choice == '定位') {
+                    _getCurrentLocation(context, weatherProvider);
+                  } else if ( choice == "切换主题") {
+                    weatherProvider.updateThemeMode(
+                        !weatherProvider.isDarkMode
+                    );
+                  } else if (choice == '关于') {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('关于'),
+                          content: Text('这是一个天气应用'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('确定'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    PopupMenuItem<String>(
+                      value: '刷新',
+                      child: Row(
+                        children: [
+                          Icon(Icons.refresh),
+                          SizedBox(width: 10),
+                          Text('刷新'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: '定位',
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on),
+                          SizedBox(width: 10),
+                          Text('定位'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: '切换主题',
+                      child: Row(
+                        children: [
+                          // Icon(Icons.light_mode),
+                          // Text('切换主题'),
+                          if (weatherProvider.isDarkMode)
+                            Icon(Icons.light_mode)
+                          else
+                            Icon(Icons.dark_mode),
+                          // Icon(Icons.),
+                          SizedBox(width: 10),
+                          if (weatherProvider.isDarkMode)
+                            Text('切换到白天模式')
+                          else
+                            Text('切换到夜间模式'),
+                        ],
+                      ),
+                    ),
+
+                    PopupMenuItem<String>(
+                      value: '关于',
+                      child: Row(
+                        children: [
+                          Icon(Icons.info),
+                          SizedBox(width: 10),
+                          Text('关于'),
+                        ],
+                      ),
+                    ),
+
+                  ];
+                },
+              ),
             ],
           ),
           body: _widgetOptions.elementAt(_selectedIndex),
@@ -139,12 +213,15 @@ class _HomePageState extends State<HomePage>
       //     autoCloseDuration: const Duration(seconds: 5),
       //   );
       var position = GetIt.I.get<Position>();
-      provider.loadWeatherDataByLocation(position.latitude, position.longitude);
+
       toastification.show(
         context: context,
         title: Text('定位成功, 正在获取天气信息'),
         autoCloseDuration: const Duration(seconds: 2),
       );
+      await provider.loadWeatherDataByLocation(
+          position.latitude, position.longitude);
+
       return;
     }
 
@@ -199,12 +276,13 @@ class _HomePageState extends State<HomePage>
     // GetIt.I<GeoapiService>().getCityName(position.latitude, position.longitude);
     GetIt.I.registerSingleton<Position>(position);
 
-    provider.loadWeatherDataByLocation(position.latitude, position.longitude);
-
     toastification.show(
       context: context,
       title: Text('定位成功, 正在获取天气信息'),
       autoCloseDuration: const Duration(seconds: 2),
     );
+
+    await provider.loadWeatherDataByLocation(
+        position.latitude, position.longitude);
   }
 }

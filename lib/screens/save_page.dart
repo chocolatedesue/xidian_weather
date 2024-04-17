@@ -5,6 +5,7 @@ import 'package:xidian_weather/model/geoInfo.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 // 引入本地存储相关库
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:xidian_weather/service/geoapi_service.dart';
 
 // ... 其他导入
 
@@ -14,17 +15,9 @@ class SavePage extends StatefulWidget {
 }
 
 class _SavePageState extends State<SavePage> {
-  // 添加下拉刷新控制器
-  final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
-  Future<void> _refreshWeatherData(BuildContext context) async {
-    // 使用下拉刷新控制器显示加载指示器
-    _refreshIndicatorKey.currentState?.show();
-    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
-    // 从本地存储获取 savedCities 数据
-    // await weatherProvider.fetchSavedCitiesFromLocal();
-    // TODO: 在这里执行刷新操作，例如重新获取天气数据
-  }
+    // 记录当前选中的卡片索引，-1 表示未选中任何卡片
+  int _selectedIndex = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -34,33 +27,36 @@ class _SavePageState extends State<SavePage> {
       ),
       body: Consumer<WeatherProvider>(
         builder: (context, weatherProvider, child) {
-          // 使用 RefreshIndicator 实现下拉刷新
-          return RefreshIndicator(
-            key: _refreshIndicatorKey,
-            onRefresh: () => _refreshWeatherData(context),
-            child: ListView.builder(
-              itemCount: weatherProvider.savedCities.length,
-              itemBuilder: (context, index) {
-                final city = weatherProvider.savedCities[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(city.location[0].name ?? '未知',
-                        style: TextStyle(fontSize: 20, color: Colors.red)),
-                    subtitle: Text(
-                        "ID: ${city.location[0].id}\nlat: ${city.location[0].lat ?? '未知'} lon: ${city.location[0].lon ?? '未知'}",
-                        style: TextStyle(fontSize: 15, color: Colors.blue)),
-                    onTap: () {
-                      // 更新 geoInfo 并加载天气数据
-                      weatherProvider.updateGeoInfo(city);
-                      weatherProvider.loadWeatherDataByLocation(
-                        double.parse(city.location[0].lat!),
-                        double.parse(city.location[0].lon!),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+          return ListView.builder(
+            itemCount: weatherProvider.savedCities!.length,
+            itemBuilder: (context, index) {
+              final city = weatherProvider.savedCities![index];
+              return Card(
+                 // 根据选中状态设置卡片颜色
+                color: _selectedIndex == index ? Color.fromARGB(255, 108, 108, 108) : Colors.white,
+                child: ListTile(
+                  title: Text(city.location[0].name ?? '未知',
+                      style: TextStyle(fontSize: 20, color: Colors.red)),
+                  subtitle: Text(
+                      "ID: ${city.location[0].id}\nlat: ${city.location[0].lat ?? '未知'} lon: ${city.location[0].lon ?? '未知'}",
+                      style: TextStyle(fontSize: 15, color: Colors.blue)),
+                  onTap: () {
+                      setState(() {
+                      _selectedIndex = index;
+                    });
+                    
+                    weatherProvider.updateGeoInfo(city);
+                    weatherProvider.loadWeatherDataByLocation(
+                      double.parse(city.location[0].lat),
+                      double.parse(city.location[0].lon),
+
+                      
+                    );
+                  },
+                ),
+              );
+            },
+            // ),
           );
         },
       ),
@@ -69,7 +65,6 @@ class _SavePageState extends State<SavePage> {
         child: Icon(Icons.add),
       ),
     );
-
   }
 
   Future<void> _showAddCityDialog(BuildContext context) async {
@@ -95,15 +90,22 @@ class _SavePageState extends State<SavePage> {
               final cityName = _cityNameController.text.trim();
               if (cityName.isNotEmpty) {
                 // 加载城市信息并更新 savedCities
-                final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
-                await weatherProvider.loadWeatherDataByCityName(cityName);
-                if (weatherProvider.geoInfo != null) {
+                // final weatherProvider =
+                // Provider.of<WeatherProvider>(context, listen: false);
+                // await weatherProvider.loadWeatherDataByCityName(cityName);
+                final geoapiService = GetIt.I<GeoapiService>();
+                var geoInfo =
+                    await geoapiService.getCurrentGeoIDByCityName(cityName);
+
+                if (geoInfo != null) {
                   // 将新城市添加到 savedCities 并保存到本地存储
-                  weatherProvider.addCityToSavedCities(weatherProvider.geoInfo!);
-                  await weatherProvider.saveSavedCitiesToLocal();
+                  var weatherProvider =
+                      Provider.of<WeatherProvider>(context, listen: false);
+                  weatherProvider.addCityToSavedCities(geoInfo);
+                  // await weatherProvider.saveSavedCitiesToLocal();
                   // 关闭对话框并刷新页面
                   Navigator.pop(context);
-                  _refreshWeatherData(context);
+                  // _refreshWeatherData(context);
                 }
               }
             },
