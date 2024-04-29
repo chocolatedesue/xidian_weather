@@ -1,6 +1,6 @@
-
 // import 'package:dynamic_color/dynamic_color.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:flutter/widgets.dart';
@@ -44,19 +44,22 @@ class MyApp extends StatelessWidget {
         prefs.getBool(ISDARKMODE) ?? ThemeMode.system == ThemeMode.dark
             ? AdaptiveThemeMode.dark
             : AdaptiveThemeMode.light;
+    var lightTheme = ThemeData.light(useMaterial3: true)
+        .useSystemChineseFont(Brightness.light);
+    var darkTheme = ThemeData.dark(useMaterial3: true)
+        .useSystemChineseFont(Brightness.dark);
 
     return ChangeNotifierProvider(
         create: (context) => GetIt.I<WeatherProvider>(),
         child: AdaptiveTheme(
-          light: ThemeData.light(useMaterial3: true),
-          dark: ThemeData.dark(useMaterial3: true),
+          light: lightTheme,
+          dark: darkTheme,
           initial: themeMode,
           builder: (theme, darkTheme) => MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: theme,
-            darkTheme: darkTheme,
-            home: const HomePage(),
-          ),
+              debugShowCheckedModeBanner: false,
+              home: const HomePage(),
+              theme: theme,
+              darkTheme: darkTheme),
         ));
   }
 }

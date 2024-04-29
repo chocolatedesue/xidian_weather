@@ -346,26 +346,26 @@ class _HomePageState extends State<HomePage>
                         ],
                       ),
                     ),
-                    PopupMenuItem<String>(
-                      value: '自动获取位置',
-                      child: StatefulBuilder(
-                        builder: (BuildContext context, StateSetter setState) {
-                          return CheckboxListTile(
-                            title: const Text('自动获取位置'),
-                            secondary: const Icon(Icons.auto_mode),
-                            value: weatherProvider.autoGetLocation,
-                            onChanged: (value) {
-                              setState(() {
-                                weatherProvider.updateAutoGetLocation(value!);
-                                // GetIt.I
-                                //     .get<SharedPreferences>()
-                                //     .setBool(AUTOLOCATION, value);
-                              });
-                            },
-                          );
-                        },
-                      ),
-                    ),
+                    // PopupMenuItem<String>(
+                    //   value: '自动获取位置',
+                    //   child: StatefulBuilder(
+                    //     builder: (BuildContext context, StateSetter setState) {
+                    //       return CheckboxListTile(
+                    //         title: const Text('自动获取位置'),
+                    //         secondary: const Icon(Icons.auto_mode),
+                    //         value: weatherProvider.autoGetLocation,
+                    //         onChanged: (value) {
+                    //           setState(() {
+                    //             weatherProvider.updateAutoGetLocation(value!);
+                    //             // GetIt.I
+                    //             //     .get<SharedPreferences>()
+                    //             //     .setBool(AUTOLOCATION, value);
+                    //           });
+                    //         },
+                    //       );
+                    //     },
+                    //   ),
+                    // ),
                     const PopupMenuItem<String>(
                       value: '关于',
                       child: Row(

@@ -12,3 +12,9 @@ A new Flutter project.
 <!-- // 3. sqlite 实现savedCity增删改查 -->
 <!-- 4. test 可能出错，要注释掉sp的初始化 -->
 3. 组件initstate不能声明为async，否则无法加载
+
+## feature
+1. 支持自选地域 保存
+2. 可以定位
+3. 使用和风天气api
+4. 对使用体验和外观做了优化

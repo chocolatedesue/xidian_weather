@@ -59,6 +59,17 @@ class _SavePageState extends State<SavePage> {
                           : Theme.of(context).colorScheme.onSecondary,
                       onPressed: () {
                         // 弹出确认删除对话框
+                        if (weatherProvider.selectedCityCardIndex == index) {
+                          toastification.show(
+                            context: context,
+                            title: const Text('当前选中的城市无法删除, 请先切换城市',
+                                style: TextStyle(color: Colors.red)),
+                            autoCloseDuration: const Duration(seconds: 2),
+                          );
+
+                          return;
+                        }
+
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
