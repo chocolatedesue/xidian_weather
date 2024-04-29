@@ -51,6 +51,7 @@ jobs:
           path: build/windows/x64/runner/Release
 
   create-release:
+    waits-for: [build-apk, build-windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
