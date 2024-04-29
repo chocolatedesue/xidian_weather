@@ -25,10 +25,12 @@ jobs:
       - run: flutter pub get
 
       - name: generate environment from dart builder
-        with: # Set the secret as an input
+        env: # Set the secret as an environment variable
           APIKEY: ${{ secrets.APIKEY }}
+        run: |
+          dart run build_runner clean
+          dart run build_runner build --delete-conflicting-outputs
 
-        run: dart run build_runner clean &&  dart run build_runner build --delete-conflicting-outputs
 
       - run: flutter build apk --split-per-abi --release
       - uses: actions/upload-artifact@v4 # Upload specific APK (example: arm64-v8a)
@@ -54,10 +56,11 @@ jobs:
       - run: flutter pub get
 
       - name: generate environment from dart builder
-        with: # Set the secret as an input
+        env: # Set the secret as an environment variable
           APIKEY: ${{ secrets.APIKEY }}
-        run: dart run build_runner clean &&  dart run build_runner build --delete-conflicting-outputs
-
+        run: |
+          dart run build_runner clean
+          dart run build_runner build --delete-conflicting-outputs
       - run: flutter build windows --release
       - uses: actions/upload-artifact@v4
         with:
