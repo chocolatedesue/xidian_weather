@@ -12,6 +12,7 @@ A new Flutter project.
 <!-- // 3. sqlite 实现savedCity增删改查 -->
 <!-- 4. test 可能出错，要注释掉sp的初始化 -->
 3. 组件initstate不能声明为async，否则无法加载
+4. 字体颜色问题
 
 ## feature
 1. 支持自选地域 保存
