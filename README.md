@@ -1,6 +1,7 @@
 # xidian_weather
 
 A new Flutter project.
+author: chocolatedesue@outlook.com
 
 ## 参考
 1. 和风天气开发文档: https://dev.qweather.com/docs/
@@ -19,3 +20,6 @@ A new Flutter project.
 2. 可以定位
 3. 使用和风天气api
 4. 对使用体验和外观做了优化
+
+## TODO
+1. apikey 写死了， public记得修改
