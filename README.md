@@ -9,7 +9,7 @@ author: chocolatedesue@outlook.com
 
 ## quick start
 1. git clone xx, cd xx
-2. create .env file in root dir, add `API_KEY=your_key` where your_key is your hefeng weather api key, https://dev.qweather.com/docs/api/
+2. create .env file in root dir, add `APIKEY=your_key` where your_key is your hefeng weather api key, https://dev.qweather.com/docs/api/
 3. flutter pub get
 4. dart run build_runner clean &&  dart run build_runner build --delete-conflicting-outputs
 5. flutter run
@@ -21,6 +21,7 @@ author: chocolatedesue@outlook.com
 <!-- 4. test 可能出错，要注释掉sp的初始化 -->
 3. 组件initstate不能声明为async，否则无法加载
 4. 字体颜色问题
+5. 若要复用action, 需要在github secret中添加APIKEY
 
 ## feature
 1. 支持自选地域 保存
