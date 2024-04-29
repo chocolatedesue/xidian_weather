@@ -13,15 +13,11 @@ class WeatherService {
 
   WeatherService(this._authKey);
 
-  bool checkAuthKey() {
+  Future<bool> checkAuthKey() async {
     if (_authKey.isEmpty) {
       return false;
     }
-    if (ApiTest.testApikey(_authKey)) {
-      return true;
-    } else {
-      return false;
-    }
+    return await ApiTest.testApikey(_authKey);
   }
 
   updateAuthKey(String key) {

@@ -83,10 +83,6 @@ Future<void> setupData() async {
   //  use flutter_secure_storage to read and write the api key
   const storage = FlutterSecureStorage();
 
-  // String apiKey =
-  // await storage.read(key: APIKEY) ?? '';
-
-  //  get Apikey from  storage or env or ''
   String apiKey = await storage.read(key: APIKEY) ?? '';
   if (apiKey.isEmpty) {
     apiKey = Env.apiKey;

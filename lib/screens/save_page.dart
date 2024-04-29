@@ -151,9 +151,9 @@ class _SavePageState extends State<SavePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
+        onPressed: () async {
           var weatherService = GetIt.I<WeatherService>();
-          if (!weatherService.checkAuthKey()) {
+          if (!await weatherService.checkAuthKey()) {
             toastification.show(
               context: context,
               title: const Text('请先设置 API Key'),

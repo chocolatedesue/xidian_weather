@@ -173,11 +173,11 @@ class _HomePageState extends State<HomePage>
               // 使用 PopupMenuButton 创建下拉菜单
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert), // 使用 "..." 图标
-                onSelected: (String choice) {
+                onSelected: (String choice) async {
                   switch (choice) {
                     case '刷新':
                       var weatherService = GetIt.I.get<WeatherService>();
-                      if (!weatherService.checkAuthKey()) {
+                      if (!await weatherService.checkAuthKey()) {
                         toastification.show(
                           context: context,
                           title: const Text('错误, 请先设置 API Key'),
@@ -190,7 +190,7 @@ class _HomePageState extends State<HomePage>
                       break;
                     case '定位':
                       var weatherService = GetIt.I.get<WeatherService>();
-                      if (!weatherService.checkAuthKey()) {
+                      if (!await weatherService.checkAuthKey()) {
                         toastification.show(
                           context: context,
                           title: const Text('错误, 请先设置 API Key'),
@@ -198,7 +198,6 @@ class _HomePageState extends State<HomePage>
                         );
                         return;
                       }
-
                       _getCurrentLocation(context, weatherProvider, true);
                       break;
                     case '切换主题':
