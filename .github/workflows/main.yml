@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4 # Cache Flutter SDK and dependencies
-        with:
-          path: |
-            ~/.pub-cache/hosted/pub.dartlang.org
-            /opt/hostedtoolcache/flutter
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
+      # - uses: actions/cache@v4 # Cache Flutter SDK and dependencies
+      #   with:
+      #     path: |
+      #       ~/.pub-cache/hosted/pub.dartlang.org
+      #       /opt/hostedtoolcache/flutter
+      #     key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-flutter-
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.19.5"
@@ -32,14 +32,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4 # Cache Flutter SDK and dependencies
-        with:
-          path: |
-            ~/.pub-cache/hosted/pub.dartlang.org
-            /opt/hostedtoolcache/flutter
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
+      # - uses: actions/cache@v4 # Cache Flutter SDK and dependencies
+      #   with:
+      #     path: |
+      #       ~/.pub-cache/hosted/pub.dartlang.org
+      #       /opt/hostedtoolcache/flutter
+      #     key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-flutter-
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.19.5"
