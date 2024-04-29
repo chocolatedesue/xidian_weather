@@ -8,11 +8,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:xidian_weather/env/envied.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 import 'package:xidian_weather/screens/homepage.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
 import 'package:xidian_weather/service/weatherapi_service.dart';
-import 'package:xidian_weather/util/apiTest.dart';
+// import 'package:xidian_weather/util/apiTest.dart';
 // import 'package:xidian_weather/theme/app_theme.dart';
 import 'package:xidian_weather/util/const.dart';
 // import 'package:xidian_weather/theme/app_theme.dart';
@@ -82,12 +83,14 @@ Future<void> setupData() async {
   //  use flutter_secure_storage to read and write the api key
   const storage = FlutterSecureStorage();
 
-  String apiKey =
-      await storage.read(key: APIKEY) ?? 'a39653de05304df4a1aa614bba622fef';
+  // String apiKey =
+  // await storage.read(key: APIKEY) ?? '';
 
-  if (!await ApiTest.testApikey(apiKey)) {
-    apiKey = 'a39653de05304df4a1aa614bba622fef';
-    // TODO: 显示api无效信息
+  //  get Apikey from  storage or env or ''
+  String apiKey = await storage.read(key: APIKEY) ?? '';
+  if (apiKey.isEmpty) {
+    apiKey = Env.apiKey;
+    await storage.write(key: APIKEY, value: apiKey);
   }
 
   GetIt.I.registerSingleton<WeatherService>(

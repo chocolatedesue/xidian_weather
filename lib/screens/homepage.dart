@@ -176,9 +176,29 @@ class _HomePageState extends State<HomePage>
                 onSelected: (String choice) {
                   switch (choice) {
                     case '刷新':
+                      var weatherService = GetIt.I.get<WeatherService>();
+                      if (!weatherService.checkAuthKey()) {
+                        toastification.show(
+                          context: context,
+                          title: const Text('错误, 请先设置 API Key'),
+                          autoCloseDuration: const Duration(seconds: 5),
+                        );
+                        return;
+                      }
+
                       _refreshWeatherData(context);
                       break;
                     case '定位':
+                      var weatherService = GetIt.I.get<WeatherService>();
+                      if (!weatherService.checkAuthKey()) {
+                        toastification.show(
+                          context: context,
+                          title: const Text('错误, 请先设置 API Key'),
+                          autoCloseDuration: const Duration(seconds: 5),
+                        );
+                        return;
+                      }
+
                       _getCurrentLocation(context, weatherProvider, true);
                       break;
                     case '切换主题':
@@ -230,7 +250,8 @@ class _HomePageState extends State<HomePage>
                                 content: TextField(
                                   textInputAction: TextInputAction.done,
                                   decoration: const InputDecoration(
-                                    labelText: '请输入和风天气的 API Key',
+                                    labelText:
+                                        '请输入和风天气的 API Key \n可到 https://dev.qweather.com/docs/api/ 查看文档',
                                   ),
                                   onChanged: (value) {
                                     apiKey = value;

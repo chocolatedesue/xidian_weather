@@ -7,6 +7,13 @@ author: chocolatedesue@outlook.com
 1. 和风天气开发文档: https://dev.qweather.com/docs/
 2. ui设计 应用原型大概参考这个应用 https://github.com/MGAndroidProjects/WeatherWise-Releases
 
+## quick start
+1. git clone xx, cd xx
+2. create .env file in root dir, add `API_KEY=your_key` where your_key is your hefeng weather api key, https://dev.qweather.com/docs/api/
+3. flutter pub get
+4. dart run build_runner clean &&  dart run build_runner build --delete-conflicting-outputs
+5. flutter run
+
 ## notice:
 1. api中存在可能空值， 未作处理
 2. ios macos位置权限未声明
@@ -23,3 +30,4 @@ author: chocolatedesue@outlook.com
 
 ## TODO
 1. apikey 写死了， public记得修改
+2. 安卓没有签名， 可能不方便覆盖安装

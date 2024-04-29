@@ -5,6 +5,7 @@ import 'package:toastification/toastification.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 // 引入本地存储相关库
 import 'package:xidian_weather/service/geoapi_service.dart';
+import 'package:xidian_weather/service/weatherapi_service.dart';
 
 // ... 其他导入
 
@@ -150,7 +151,18 @@ class _SavePageState extends State<SavePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddCityDialog(context), // 显示添加城市对话框
+        onPressed: () {
+          var weatherService = GetIt.I<WeatherService>();
+          if (!weatherService.checkAuthKey()) {
+            toastification.show(
+              context: context,
+              title: const Text('请先设置 API Key'),
+              autoCloseDuration: const Duration(seconds: 2),
+            );
+            return;
+          }
+          _showAddCityDialog(context); // 显示添加城市对话框
+        },
         child: const Icon(Icons.add),
       ),
     );

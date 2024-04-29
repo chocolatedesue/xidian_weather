@@ -104,3 +104,6 @@ build/
 
 
 .env
+
+env.g.dart
+envied.g.dart
