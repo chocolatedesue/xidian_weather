@@ -86,13 +86,25 @@ class _SavePageState extends State<SavePage> {
                                   var cityList = weatherProvider.savedCities;
                                   cityList!.removeAt(index);
                                   await weatherProvider
-                                      .updateSavedCities(cityList);
-                                  toastification.show(
-                                    context: context,
-                                    title: Text('已删除 ${city.location[0].name}'),
-                                    autoCloseDuration:
-                                        const Duration(seconds: 2),
-                                  );
+                                      .updateSavedCities(cityList)
+                                      .then((value) {
+                                    toastification.show(
+                                      context: context,
+                                      title:
+                                          Text('已删除 ${city.location[0].name}'),
+                                      autoCloseDuration:
+                                          const Duration(seconds: 2),
+                                    );
+                                  });
+                                  // if (mounted) {
+                                  //   toastification.show(
+                                  //     context: context,
+                                  //     title:
+                                  //         Text('已删除 ${city.location[0].name}'),
+                                  //     autoCloseDuration:
+                                  //         const Duration(seconds: 2),
+                                  //   );
+                                  // }
                                 },
                                 child: const Text('确定'),
                               ),
@@ -110,29 +122,33 @@ class _SavePageState extends State<SavePage> {
                         // );
                       }),
                   onTap: () async {
-                    if (weatherProvider.selectedCityCardIndex == index) {
-                      toastification.show(
-                        context: context,
-                        title: const Text('已经是当前选中的城市了'),
-                        autoCloseDuration: const Duration(seconds: 2),
-                      );
+                    // if (weatherProvider.selectedCityCardIndex == index) {
+                    //   toastification.show(
+                    //     context: context,
+                    //     title: const Text('已经是当前选中的城市了'),
+                    //     autoCloseDuration: const Duration(seconds: 2),
+                    //   );
 
-                      return;
-                    }
+                    //   return;
+                    // }
 
                     showLoadingUI(context);
 
-                    await weatherProvider.updateGeoInfo(city);
+                    await weatherProvider.updateGeoInfo(city).then((value) {
+                      toastification.show(
+                        context: context,
+                        title: Text('成功切换地区到 ${city.location[0].name}'),
+                        autoCloseDuration: const Duration(seconds: 2),
+                      );
+                      Navigator.pop(context);
+                    });
 
                     // await Future.delayed(const Duration(seconds: 1));
+                    // if (mounted) {
 
-                    toastification.show(
-                      context: context,
-                      title: Text('成功切换地区到 ${city.location[0].name}'),
-                      autoCloseDuration: const Duration(seconds: 2),
-                    );
+                    // }
 
-                    Navigator.pop(context);
+                    // Navigator.pop(context);
 
                     setState(() {
                       weatherProvider.updateSelectedCityCardIndex(index);
@@ -153,15 +169,28 @@ class _SavePageState extends State<SavePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           var weatherService = GetIt.I<WeatherService>();
-          if (!await weatherService.checkAuthKey()) {
-            toastification.show(
-              context: context,
-              title: const Text('请先设置 API Key'),
-              autoCloseDuration: const Duration(seconds: 2),
-            );
-            return;
-          }
-          _showAddCityDialog(context); // 显示添加城市对话框
+          // if (!await weatherService.checkAuthKey()) {
+          //   // if (mounted) {
+          //     toastification.show(
+          //       context: context,
+          //       title: const Text('请先设置 API Key'),
+          //       autoCloseDuration: const Duration(seconds: 2),
+          //     );
+          //   // }
+          //   return;
+          // }
+
+          await weatherService.checkAuthKey().then((value) {
+            if (!value) {
+              toastification.show(
+                context: context,
+                title: const Text('请先设置 API Key'),
+                autoCloseDuration: const Duration(seconds: 2),
+              );
+            } else {
+              _showAddCityDialog(context); // 显示添加城市对话框
+            }
+          });
         },
         child: const Icon(Icons.add),
       ),
@@ -191,24 +220,38 @@ class _SavePageState extends State<SavePage> {
               final cityName = cityNameController.text.trim();
               if (cityName.isNotEmpty) {
                 final geoapiService = GetIt.I<GeoapiService>();
-                try {
-                  var geoInfo =
-                      await geoapiService.getCurrentGeoIDByCityName(cityName);
+
+                await geoapiService
+                    .getCurrentGeoIDByCityName(cityName)
+                    .then((value) async {
                   var weatherProvider =
                       Provider.of<WeatherProvider>(context, listen: false);
 
-                  weatherProvider.addCityToSavedCities(geoInfo);
-                  // await weatherProvider.saveSavedCitiesToLocal();
+                  weatherProvider.addCityToSavedCities(value);
+                  await weatherProvider
+                      .saveSavedCitiesToLocal()
+                      .then((value) => Navigator.pop(context));
                   // 关闭对话框并刷新页面
-                  Navigator.pop(context);
+
                   // _refreshWeatherData(context);
-                } catch (e) {
+                }).onError((error, stackTrace) {
                   toastification.show(
                     context: context,
-                    title: Text('添加城市失败: 可能是城市名称错误或网络问题\n$e'),
+                    title: Text('添加城市失败: 可能是城市名称错误或网络问题\n$error'),
                     autoCloseDuration: const Duration(seconds: 2),
                   );
-                }
+                });
+
+                // var geoInfo =
+                // await geoapiService.getCurrentGeoIDByCityName(cityName);
+                // var weatherProvider =
+                //     Provider.of<WeatherProvider>(context, listen: false);
+
+                // weatherProvider.addCityToSavedCities(geoInfo);
+                // // await weatherProvider.saveSavedCitiesToLocal();
+                // // 关闭对话框并刷新页面
+                // Navigator.pop(context);
+                // _refreshWeatherData(context);
               }
             },
             child: const Text('确定'),

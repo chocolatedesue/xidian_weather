@@ -22,6 +22,7 @@ author: chocolatedesue@outlook.com
 3. 组件initstate不能声明为async，否则无法加载
 4. 字体颜色问题
 5. 若要复用action, 需要在github secret中添加APIKEY
+6. 如果跑不通，可以手动指定apikey
 
 ## feature
 1. 支持自选地域 保存

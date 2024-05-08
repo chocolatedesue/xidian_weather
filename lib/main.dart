@@ -70,7 +70,6 @@ Future<void> setupData() async {
   // WidgetsFlutterBinding.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   // await DynamicColorPlugin.initial();
-  // String apiKey = 'a39653de05304df4a1aa614bba622fef';
 
   GetIt.I.registerSingleton<WeatherProvider>(
     WeatherProvider(),

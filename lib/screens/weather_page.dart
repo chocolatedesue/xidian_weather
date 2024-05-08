@@ -15,7 +15,9 @@ class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
 
   @override
-  _WeatherPageState createState() => _WeatherPageState();
+  _WeatherPageState createState() {
+    return _WeatherPageState();
+  }
 }
 
 class _WeatherPageState extends State<WeatherPage> {

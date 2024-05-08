@@ -1,6 +1,8 @@
 // import 'package:dynamic_color/dynamic_color.dart';
 // import 'dart:io';
 
+import 'dart:isolate';
+
 import 'package:adaptive_theme/adaptive_theme.dart';
 // import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 // import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
+import 'package:permission_handler/permission_handler.dart';
 // import 'package:geolocator/geolocator.dart';
 // import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -35,92 +38,74 @@ class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   // bool firstLoading = false;
+  bool isloading = false;
 
   Future<void> _getCurrentLocation(
       BuildContext context, WeatherProvider provider, bool showToast) async {
-    if (GetIt.I.isRegistered<Position>()) {
-      var position = GetIt.I.get<Position>();
-      if (showToast) {
-        toastification.show(
-          context: context,
-          title: const Text('定位成功, 正在获取天气信息'),
-          autoCloseDuration: const Duration(seconds: 2),
-        );
-      }
-      await provider.loadWeatherDataByLocation(
-          position.latitude, position.longitude);
-
-      return;
-    }
-
-    // print("开始获取位置信息");
-    if (showToast) {
+    await Permission.location.onDeniedCallback(() {
       toastification.show(
         context: context,
-        title: const Text('正在获取位置信息'),
+        title: const Text('错误, 位置权限已拒绝'),
         autoCloseDuration: const Duration(seconds: 5),
       );
-    }
-
-    LocationPermission permission;
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // print("位置服务已禁用");
-      if (showToast) {
-        toastification.show(
-          context: context,
-          title: const Text('错误, 位置服务已禁用，请启用位置服务后重启应用'),
-          autoCloseDuration: const Duration(seconds: 5),
-        );
-      }
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        // print("位置权限已拒绝");
-        if (showToast) {
-          toastification.show(
-            context: context,
-            title: const Text('错误, 位置权限已拒绝'),
-            autoCloseDuration: const Duration(seconds: 5),
-          );
-        }
-
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      // print("位置权限已永久拒绝");
-      if (showToast) {
-        toastification.show(
-          context: context,
-          title: const Text('错误, 位置权限已永久拒绝'),
-          autoCloseDuration: const Duration(seconds: 5),
-        );
-      }
-
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    // print("successfully get location");
-
-    var position = await Geolocator.getCurrentPosition();
-    // GetIt.I<GeoapiService>().getCityName(position.latitude, position.longitude);
-    // GetIt.I.registerSingleton<Position>(position);
-    if (showToast) {
+    }).onGrantedCallback(() async {
       toastification.show(
         context: context,
-        title: const Text('定位成功, 正在获取天气信息'),
-        autoCloseDuration: const Duration(seconds: 2),
+        title: const Text('已获取位置权限，正在获取位置信息'),
+        autoCloseDuration: const Duration(seconds: 5),
       );
-    }
+      await Geolocator.getCurrentPosition().then((value) async {
+        isloading = true;
+        setState(() {});
+        await Geolocator.getCurrentPosition().then((value) {
+          provider.loadWeatherDataByLocation(value.latitude, value.longitude);
+        });
+        isloading = false;
+        setState(() {});
+      }).onError((error, stackTrace) {
+        isloading = false;
+        setState(() {});
+        toastification.show(
+          context: context,
+          title: Text('获取位置信息失败, 请检查定位是否打开\n错误信息: $error'),
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+      });
 
-    await provider.loadWeatherDataByLocation(
-        position.latitude, position.longitude);
+      // Your code
+    }).onPermanentlyDeniedCallback(() {
+      toastification.show(
+        context: context,
+        title: const Text('错误, 位置权限已永久拒绝'),
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+
+      // Your code
+    }).onRestrictedCallback(() {
+      toastification.show(
+        context: context,
+        title: const Text('错误, 位置权限已限制'),
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+
+      // Your code
+    }).onLimitedCallback(() {
+      toastification.show(
+        context: context,
+        title: const Text('错误, 位置权限已限制'),
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+
+      // Your code
+    }).onProvisionalCallback(() {
+      toastification.show(
+        context: context,
+        title: const Text('正在获取位置权限'),
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+
+      // Your code
+    }).request();
   }
 
   final _widgetOptions = <Widget>[
@@ -129,7 +114,7 @@ class _HomePageState extends State<HomePage>
     const SavePage(),
   ];
 
-  get _isChecked => null;
+  // get _isChecked => null;
 
   Future<void> _refreshWeatherData(BuildContext context) async {
     final weatherProvider =
@@ -141,14 +126,17 @@ class _HomePageState extends State<HomePage>
         autoCloseDuration: const Duration(seconds: 2),
       );
       // final geoPosition = GetIt.I.get<Position>();
-      await weatherProvider.loadWeatherDataByLocation(
-          double.parse(weatherProvider.geoInfo!.location[0].lat),
-          double.parse(weatherProvider.geoInfo!.location[0].lon));
-      toastification.show(
-        context: context,
-        title: const Text('刷新成功'),
-        autoCloseDuration: const Duration(seconds: 2),
-      );
+      await weatherProvider
+          .loadWeatherDataByLocation(
+              double.parse(weatherProvider.geoInfo!.location[0].lat),
+              double.parse(weatherProvider.geoInfo!.location[0].lon))
+          .then((value) {
+        toastification.show(
+          context: context,
+          title: const Text('刷新成功'),
+          autoCloseDuration: const Duration(seconds: 2),
+        );
+      });
     } else {
       toastification.show(
         context: context,
@@ -164,6 +152,9 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     return Consumer<WeatherProvider>(
       builder: (context, weatherProvider, child) {
+        // if (isloading) {
+        //   return const Center(child: CircularProgressIndicator());
+        // }
         return Scaffold(
           appBar: AppBar(
             title: const Text('西电天气-雾霾检测'),
@@ -177,28 +168,54 @@ class _HomePageState extends State<HomePage>
                   switch (choice) {
                     case '刷新':
                       var weatherService = GetIt.I.get<WeatherService>();
-                      if (!await weatherService.checkAuthKey()) {
-                        toastification.show(
-                          context: context,
-                          title: const Text('错误, 请先设置 API Key'),
-                          autoCloseDuration: const Duration(seconds: 5),
-                        );
-                        return;
-                      }
+                      await weatherService.checkAuthKey().then((value) {
+                        if (!value) {
+                          toastification.show(
+                            context: context,
+                            title: const Text('错误, 请先设置 API Key'),
+                            autoCloseDuration: const Duration(seconds: 5),
+                          );
+                          return;
+                        } else {
+                          _refreshWeatherData(context);
+                        }
+                      });
 
-                      _refreshWeatherData(context);
+                      // if (!await weatherService.checkAuthKey()) {
+                      //   toastification.show(
+                      //     context: context,
+                      //     title: const Text('错误, 请先设置 API Key'),
+                      //     autoCloseDuration: const Duration(seconds: 5),
+                      //   );
+                      //   return;
+                      // }
+
+                      // _refreshWeatherData(context);
                       break;
                     case '定位':
                       var weatherService = GetIt.I.get<WeatherService>();
-                      if (!await weatherService.checkAuthKey()) {
-                        toastification.show(
-                          context: context,
-                          title: const Text('错误, 请先设置 API Key'),
-                          autoCloseDuration: const Duration(seconds: 5),
-                        );
-                        return;
-                      }
-                      _getCurrentLocation(context, weatherProvider, true);
+                      await weatherService.checkAuthKey().then((value) {
+                        if (!value) {
+                          toastification.show(
+                            context: context,
+                            title: const Text('错误, 请先设置 API Key'),
+                            autoCloseDuration: const Duration(seconds: 5),
+                          );
+                          return;
+                        } else {
+                          _getCurrentLocation(context, weatherProvider, true);
+                        }
+                      });
+
+                      // if (!await weatherService.checkAuthKey()) {
+                      //   toastification.show(
+                      //     context: context,
+                      //     title: const Text('错误, 请先设置 API Key'),
+                      //     autoCloseDuration: const Duration(seconds: 5),
+                      //   );
+                      //   return;
+                      // }
+                      // _getCurrentLocation(context, weatherProvider, true);
                       break;
                     case '切换主题':
                       {
@@ -266,16 +283,23 @@ class _HomePageState extends State<HomePage>
                                         );
                                         return;
                                       }
-                                      if (!await ApiTest.testApikey(apiKey)) {
-                                        toastification.show(
-                                          context: context,
-                                          title: const Text('API Key 无效'),
-                                        );
-                                        return;
-                                      }
-
-                                      await const FlutterSecureStorage()
-                                          .write(key: APIKEY, value: apiKey);
+                                      // if (!await ApiTest.testApikey(apiKey)) {
+                                      //   toastification.show(
+                                      //     context: context,
+                                      //     title: const Text('API Key 无效'),
+                                      //   );
+                                      //   return;
+                                      // }
+                                      await ApiTest.testApikey(apiKey)
+                                          .then((value) {
+                                        if (!value) {
+                                          toastification.show(
+                                            context: context,
+                                            title: const Text('API Key 无效'),
+                                          );
+                                          return;
+                                        }
+                                      });
 
                                       GetIt.I
                                           .get<WeatherService>()
@@ -283,8 +307,17 @@ class _HomePageState extends State<HomePage>
                                       GetIt.I
                                           .get<GeoapiService>()
                                           .updateAuthKey(apiKey);
+                                      await const FlutterSecureStorage()
+                                          .write(key: APIKEY, value: apiKey)
+                                          .then((value) {
+                                        toastification.show(
+                                          context: context,
+                                          title: const Text('设置成功'),
+                                        );
+                                        Navigator.of(context).pop();
+                                      });
 
-                                      Navigator.of(context).pop();
+                                      // Navigator.of(context).pop();
                                     },
                                     child: const Text('确定'),
                                   ),
@@ -401,7 +434,9 @@ class _HomePageState extends State<HomePage>
               ),
             ],
           ),
-          body: _widgetOptions.elementAt(_selectedIndex),
+          body: isloading
+              ? const Center(child: CircularProgressIndicator())
+              : _widgetOptions.elementAt(_selectedIndex),
           bottomNavigationBar: BottomNavigationBar(
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
