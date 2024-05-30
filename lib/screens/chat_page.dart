@@ -1,38 +1,25 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart'; // 引入 flutter_markdown 包
+import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:xidian_weather/model/airInfo.dart';
+import 'package:xidian_weather/model/cur_weatherInfo.dart';
 import 'dart:convert';
 
-class Message {
-  final String sender;
-  final String content;
-  final DateTime timestamp;
-
-  Message({
-    required this.sender,
-    required this.content,
-    required this.timestamp,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'sender': sender,
-      'content': content,
-      'timestamp': timestamp.toIso8601String(),
-    };
-  }
-
-  factory Message.fromJson(Map<String, dynamic> json) {
-    return Message(
-      sender: json['sender'],
-      content: json['content'],
-      timestamp: DateTime.parse(json['timestamp']),
-    );
-  }
-}
+import 'package:xidian_weather/model/message.dart';
+// import 'package:xidian_weather/service/chat_service.dart';
+import 'package:xidian_weather/service/dashscopeService.dart';
+import 'package:xidian_weather/util/icon_map.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  final CurWeatherInfo weatherInfo;
+  final AirInfo airInfo;
+  const ChatPage({
+    super.key,
+    required this.weatherInfo,
+    required this.airInfo,
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -49,9 +36,24 @@ class _ChatPageState extends State<ChatPage> {
     _checkFirstTime();
   }
 
+  _checkFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final firstTime = prefs.getBool('firstTime');
+    if (firstTime == null || firstTime == true) {
+      final welcomeMessage = Message(
+        sender: '天气小助手',
+        content: '你好，我是天气小助手，有什么可以帮助你的吗？',
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(welcomeMessage);
+      });
+      // prefs.setBool('firstTime', false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Theme.of(context).colorScheme.onPrimary;
     return
         // theme: ThemeData(
         //   primarySwatch: Theme.of(context).colorScheme.onPrimary,
@@ -121,18 +123,21 @@ class _ChatPageState extends State<ChatPage> {
                               child: MarkdownBody(
                                 data: message.content,
                                 styleSheet: MarkdownStyleSheet(
-                                  p: TextStyle(
-                                    color: message.sender == '我'
-                                        ? Theme.of(context).colorScheme.onPrimary
-                                        : Theme.of(context).colorScheme.onSecondary,
-                                  ),
-                                  strong: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  listBullet:  const TextStyle(
-                                    color: Colors.black54,
-                                  )
-                                ),
+                                    p: TextStyle(
+                                      color: message.sender == '我'
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSecondary,
+                                    ),
+                                    strong: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    listBullet: const TextStyle(
+                                      color: Colors.black54,
+                                    )),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -194,7 +199,7 @@ class _ChatPageState extends State<ChatPage> {
         _messages.add(newMessage);
       });
       _textController.clear();
-      _saveMessages();
+      // _saveMessages();
 
       _autoReply();
     }
@@ -219,46 +224,78 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _autoReply() async {
-    String rawString = '''
-明天的西安天气如下：
-- **27日（明天）**：预计有**小雨转阴**，最高气温**30℃**，最低气温**20℃**¹²。
-- **出行建议**：
-    - 雨雪期间能见度较低，道路湿滑，高海拔山区易出现积雪结冰，请注意防范。
-    - 请携带雨具，穿着舒适的鞋子，以应对可能的雨水和湿滑路面。
-    - 如果需要外出，请关注交通状况，避免高速公路和山区道路，以减少不必要的风险。
-    - 注意保暖，根据天气情况选择合适的服装。
-    - 如果您驾车出行，请保持谨慎驾驶，遵守交通规则。
-    - 随时关注天气预警和交通信息，以便及时调整出行计划。
-- 请注意保持安全，祝您出行愉快！🌧️🚗
-''';
-    await Future.delayed(const Duration(seconds: 1));
+    String prompt = '';
+    for (Message message in _messages) {
+      prompt += message.sender + '：' + message.content + '\n';
+    }
 
-    final autoReplyMessage = Message(
-      sender: '自动回复',
-      content: rawString,
-      timestamp: DateTime.now(),
-    );
-    setState(() {
-      _messages.add(autoReplyMessage);
-    });
-    _saveMessages();
-  }
+    // if prompt length is too long, prompt user to clear the chat history
+    if (prompt.length > 3000) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Chat history is too long, please clear it.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
 
-  void _checkFirstTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    // final isFirstTime = prefs.getBool('isFirstTime') ?? true;
-    final isFirstTime = true;
-    if (isFirstTime) {
-      final helloMessage = Message(
+    try {
+      // final String rawString =
+      //     await GetIt.instance<ChatService>().generateResponse(prompt);
+
+      final rawString = await GetIt.instance<DashscopeAPI>()
+          .sendMessage(prompt, widget.weatherInfo, widget.airInfo);
+
+      // 如果在debug 模式，打印一下返回的内容
+      if (kDebugMode) {
+        print('rawString: $rawString');
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+
+      final autoReplyMessage = Message(
         sender: '自动回复',
-        content: '你好！我是天气小助手，有什么可以帮助你的吗？',
+        content: rawString,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(helloMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.add(autoReplyMessage);
+        });
+      }
       _saveMessages();
-      await prefs.setBool('isFirstTime', false);
+    } catch (e) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text('Failed to generate response: $e'),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Close'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
   }
 }

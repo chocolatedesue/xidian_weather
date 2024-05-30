@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xidian_weather/env/envied.dart';
 import 'package:xidian_weather/provider/weather_provider.dart';
 import 'package:xidian_weather/screens/homepage.dart';
+import 'package:xidian_weather/service/chat_service.dart';
+import 'package:xidian_weather/service/dashscopeService.dart';
 import 'package:xidian_weather/service/geoapi_service.dart';
 import 'package:xidian_weather/service/weatherapi_service.dart';
 // import 'package:xidian_weather/util/apiTest.dart';
@@ -82,18 +84,40 @@ Future<void> setupData() async {
   //  use flutter_secure_storage to read and write the api key
   const storage = FlutterSecureStorage();
 
-  String apiKey = await storage.read(key: APIKEY) ?? '';
-  if (apiKey.isEmpty) {
-    apiKey = Env.apiKey;
-    await storage.write(key: APIKEY, value: apiKey);
+  String QweatherApiKey = await storage.read(key: QWEATHERAPIKEY) ?? '';
+  if (QweatherApiKey.isEmpty) {
+    QweatherApiKey = Env.QWEATHER_APIKEY;
+    await storage.write(key: QWEATHERAPIKEY, value: QweatherApiKey);
   }
 
   GetIt.I.registerSingleton<WeatherService>(
-    WeatherService(apiKey),
+    WeatherService(QweatherApiKey),
   );
   GetIt.I.registerSingleton<GeoapiService>(
-    GeoapiService(apiKey),
+    GeoapiService(QweatherApiKey),
   );
+
+  // String googleStudioApiKey = await storage.read(key: GOOGLESTUDIOAPIKEY) ?? '';
+  // if (googleStudioApiKey.isEmpty) {
+  //   googleStudioApiKey = Env.GOOGLE_STUDIO_API_KEY;
+  //   await storage.write(key: GOOGLESTUDIOAPIKEY, value: googleStudioApiKey);
+  // }
+
+  // GetIt.I.registerSingleton<ChatService>(
+  //   // WeatherService(QweatherApiKey),
+  //   ChatService(googleStudioApiKey),
+  // );
+
+  String DashScopeApiKey = await storage.read(key: DASHSCOPEAPIKEY) ?? '';
+  if (DashScopeApiKey.isEmpty) {
+    DashScopeApiKey = Env.DASHSCOPE_APIKEY;
+    await storage.write(key: DASHSCOPEAPIKEY, value: DashScopeApiKey);
+  }
+
+  GetIt.I.registerSingleton<DashscopeAPI>(
+    DashscopeAPI(apiKey: DashScopeApiKey),
+  );
+
 
   await GetIt.I.get<WeatherProvider>().loadAllSavedData();
 

@@ -249,9 +249,15 @@ class _WeatherPageState extends State<WeatherPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          final weatherInfo = Provider.of<WeatherProvider>(context, listen: false);
+          final weather_data = weatherInfo.weatherInfo!;
+          final air_data = weatherInfo.airInfo!;
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const ChatPage()),
+            MaterialPageRoute(builder: (context) =>  ChatPage(
+              weatherInfo: weather_data,
+              airInfo: air_data,
+            )),
           );
         },
         child: const Icon(Icons.chat),

@@ -309,7 +309,7 @@ class _HomePageState extends State<HomePage>
                                           .get<GeoapiService>()
                                           .updateAuthKey(apiKey);
                                       await const FlutterSecureStorage()
-                                          .write(key: APIKEY, value: apiKey)
+                                          .write(key: QWEATHERAPIKEY, value: apiKey)
                                           .then((value) {
                                         toastification.show(
                                           context: context,
