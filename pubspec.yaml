@@ -54,6 +54,8 @@ dependencies:
   chinese_font_library: ^1.1.0
   font_awesome_flutter: ^10.7.0
   envied: ^0.5.4+1
+  flutter_markdown: ^0.7.1
+  # get: ^4.6.6
   # loading_animation_widget: ^1.2.1
   # geolocator: ^11.0.0
 
